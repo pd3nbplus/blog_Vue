@@ -1,4 +1,5 @@
 import { reactive, ref } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useFeedback } from '@/composables/useFeedback'
@@ -8,7 +9,13 @@ interface UseLoginPageOptions {
   defaultRedirect?: string
 }
 
-export function useLoginPage(options: UseLoginPageOptions = {}) {
+interface UseLoginPageResult {
+  formState: { username: string; password: string }
+  submitting: Ref<boolean>
+  handleSubmit: () => Promise<void>
+}
+
+export function useLoginPage(options: UseLoginPageOptions = {}): UseLoginPageResult {
   const router = useRouter()
   const route = useRoute()
   const userStore = useUserStore()
@@ -20,7 +27,7 @@ export function useLoginPage(options: UseLoginPageOptions = {}) {
     password: '',
   })
 
-  async function handleSubmit() {
+  async function handleSubmit(): Promise<void> {
     if (submitting.value) return
 
     submitting.value = true

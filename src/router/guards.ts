@@ -2,7 +2,7 @@ import type { Router } from 'vue-router'
 
 import { useUserStore } from '@/stores/modules/user'
 
-export function setupRouterGuards(router: Router) {
+export function setupRouterGuards(router: Router): void {
   router.beforeEach(async (to) => {
     const userStore = useUserStore()
     const isAdminRoute = to.path === '/admin' || to.path.startsWith('/admin/')

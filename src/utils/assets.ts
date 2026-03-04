@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/config/env'
 
-function detectBackendOrigin() {
+function detectBackendOrigin(): string {
   try {
     return new URL(API_BASE_URL).origin
   } catch {

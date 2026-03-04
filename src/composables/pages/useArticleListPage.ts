@@ -1,11 +1,31 @@
 import { computed, onMounted, ref, watch } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 
 import { useFeedback } from '@/composables/useFeedback'
 import { useArticleStore } from '@/stores/modules/article'
+import type { ArticleItem, CategoryItem } from '@/types/article'
 
-export function useArticleListPage() {
+interface UseArticleListPageResult {
+  list: Ref<ArticleItem[]>
+  total: Ref<number>
+  page: Ref<number>
+  pageSize: Ref<number>
+  loading: Ref<boolean>
+  categories: Ref<CategoryItem[]>
+  routeName: ComputedRef<string>
+  isCategoryRoute: ComputedRef<boolean>
+  isQueryRoute: ComputedRef<boolean>
+  query: Ref<string>
+  selectedCategory: Ref<number | undefined>
+  fetchList: (currentPage?: number) => Promise<void>
+  applyFiltersToRouteAndFetch: (currentPage?: number) => Promise<void>
+  handlePageChange: (currentPage: number) => void
+  handlePageSizeChange: (_: number, size: number) => void
+}
+
+export function useArticleListPage(): UseArticleListPageResult {
   const articleStore = useArticleStore()
   const feedback = useFeedback()
   const route = useRoute()
@@ -32,7 +52,7 @@ export function useArticleListPage() {
     return parsePositiveNumber(route.query.page) ?? 1
   }
 
-  function findCategoryById(id: number) {
+  function findCategoryById(id: number): CategoryItem | undefined {
     const stack = [...categories.value]
     while (stack.length) {
       const node = stack.pop()
@@ -51,7 +71,7 @@ export function useArticleListPage() {
     return preferred?.id ?? topCategories[0]?.id ?? 1
   }
 
-  async function fetchList(currentPage = 1) {
+  async function fetchList(currentPage = 1): Promise<void> {
     try {
       await articleStore.fetchArticleList({
         page: currentPage,
@@ -64,16 +84,16 @@ export function useArticleListPage() {
     }
   }
 
-  function handlePageChange(currentPage: number) {
+  function handlePageChange(currentPage: number): void {
     void router.push(buildPageRoute(currentPage))
   }
 
-  function handlePageSizeChange(_: number, size: number) {
+  function handlePageSizeChange(_: number, size: number): void {
     pageSize.value = size
     void router.push(buildPageRoute(1))
   }
 
-  function syncFilterFromRoute() {
+  function syncFilterFromRoute(): void {
     const q = route.query.q
     query.value = typeof q === 'string' ? q : ''
 
@@ -120,7 +140,7 @@ export function useArticleListPage() {
     }
   }
 
-  async function applyFiltersToRouteAndFetch(currentPage = 1) {
+  async function applyFiltersToRouteAndFetch(currentPage = 1): Promise<void> {
     const q = query.value.trim()
     const category = selectedCategory.value
 

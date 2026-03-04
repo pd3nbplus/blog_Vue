@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 export type AppTheme = 'clean' | 'cloud-console' | 'ai-lab-neon' | 'vercel-noir'
 
@@ -28,12 +29,12 @@ function normalizeTheme(value: string | null): AppTheme | null {
   return LEGACY_THEME_ALIASES[value] ?? null
 }
 
-function applyThemeToDom(theme: AppTheme) {
+function applyThemeToDom(theme: AppTheme): void {
   if (typeof document === 'undefined') return
   document.documentElement.setAttribute('data-theme', theme)
 }
 
-export function initThemeFromStorage() {
+export function initThemeFromStorage(): void {
   if (initialized.value) return
   initialized.value = true
   if (typeof window === 'undefined') return
@@ -46,7 +47,7 @@ export function initThemeFromStorage() {
   }
 }
 
-function setTheme(theme: AppTheme) {
+function setTheme(theme: AppTheme): void {
   currentTheme.value = theme
   applyThemeToDom(theme)
   if (typeof window !== 'undefined') {
@@ -54,7 +55,15 @@ function setTheme(theme: AppTheme) {
   }
 }
 
-export function useTheme() {
+interface UseThemeResult {
+  currentTheme: Ref<AppTheme>
+  themeOptions: Array<{ label: string; value: AppTheme }>
+  isDarkTheme: ComputedRef<boolean>
+  setTheme: (theme: AppTheme) => void
+  initThemeFromStorage: () => void
+}
+
+export function useTheme(): UseThemeResult {
   return {
     currentTheme,
     themeOptions: APP_THEME_OPTIONS,

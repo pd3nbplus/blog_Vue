@@ -14,7 +14,7 @@ export const useArticleStore = defineStore('article', () => {
   const categories = ref<CategoryItem[]>([])
   const detail = ref<ArticleDetail | null>(null)
 
-  async function fetchHomeSummary() {
+  async function fetchHomeSummary(): Promise<void> {
     loading.value = true
     try {
       const res = await getHomeSummary()
@@ -24,12 +24,12 @@ export const useArticleStore = defineStore('article', () => {
     }
   }
 
-  async function fetchCategories() {
+  async function fetchCategories(): Promise<void> {
     const res = await getCategoryTree()
     categories.value = res.data
   }
 
-  async function fetchArticleList(params: ArticleListQuery = {}) {
+  async function fetchArticleList(params: ArticleListQuery = {}): Promise<void> {
     loading.value = true
     try {
       const res = await getArticleList(params)
@@ -42,7 +42,7 @@ export const useArticleStore = defineStore('article', () => {
     }
   }
 
-  async function fetchArticleDetail(id: number) {
+  async function fetchArticleDetail(id: number): Promise<void> {
     loading.value = true
     try {
       const res = await getArticleDetail(id)
@@ -52,7 +52,7 @@ export const useArticleStore = defineStore('article', () => {
     }
   }
 
-  function clearArticleDetail() {
+  function clearArticleDetail(): void {
     detail.value = null
   }
 

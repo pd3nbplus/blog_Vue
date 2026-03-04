@@ -19,7 +19,7 @@ export const useAdminArticleStore = defineStore('adminArticle', () => {
   const page = ref(1)
   const pageSize = ref(15)
 
-  async function fetchList(params: AdminArticleListQuery = {}) {
+  async function fetchList(params: AdminArticleListQuery = {}): Promise<void> {
     loading.value = true
     try {
       const data = await getAdminArticleList(params)
@@ -54,7 +54,7 @@ export const useAdminArticleStore = defineStore('adminArticle', () => {
     }
   }
 
-  async function archiveArticle(id: number) {
+  async function archiveArticle(id: number): Promise<void> {
     submitting.value = true
     try {
       await archiveAdminArticle(id)

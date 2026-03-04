@@ -1,11 +1,18 @@
 import { computed, watch } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
 import { useFeedback } from '@/composables/useFeedback'
 import { useArticleStore } from '@/stores/modules/article'
+import type { ArticleDetail } from '@/types/article'
 
-export function useArticleDetailPage() {
+interface UseArticleDetailPageResult {
+  detail: Ref<ArticleDetail | null>
+  loading: Ref<boolean>
+}
+
+export function useArticleDetailPage(): UseArticleDetailPageResult {
   const route = useRoute()
   const articleStore = useArticleStore()
   const feedback = useFeedback()
@@ -13,7 +20,7 @@ export function useArticleDetailPage() {
 
   const articleId = computed(() => Number(route.params.id))
 
-  async function loadArticleDetail(id: number) {
+  async function loadArticleDetail(id: number): Promise<void> {
     if (!Number.isNaN(id) && id > 0) {
       try {
         await articleStore.fetchArticleDetail(id)

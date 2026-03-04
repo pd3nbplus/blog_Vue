@@ -11,20 +11,20 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => Boolean(token.value))
 
-  async function doLogin(payload: { username: string; password: string }) {
+  async function doLogin(payload: { username: string; password: string }): Promise<void> {
     const res = await login(payload)
     token.value = res.data.token
     tokenStorage.set(res.data.token)
     profile.value = res.data.user
   }
 
-  async function fetchProfile() {
+  async function fetchProfile(): Promise<void> {
     if (!token.value) return
     const res = await getProfile()
     profile.value = res.data
   }
 
-  async function doLogout() {
+  async function doLogout(): Promise<void> {
     try {
       if (token.value) {
         await logout()

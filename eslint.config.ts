@@ -23,6 +23,7 @@ export default defineConfigWithVueTs(
   vueTsConfigs.recommended,
   {
     name: 'app/strict-rules',
+    files: ['**/*.{ts,mts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': [
@@ -33,6 +34,15 @@ export default defineConfigWithVueTs(
           allowHigherOrderFunctions: true,
         },
       ],
+      'vue/component-api-style': ['error', ['script-setup', 'composition']],
+      'vue/require-explicit-emits': 'error',
+    },
+  },
+  {
+    name: 'app/vue-sfc-rules',
+    files: ['**/*.vue'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
       'vue/component-api-style': ['error', ['script-setup', 'composition']],
       'vue/require-explicit-emits': 'error',
     },

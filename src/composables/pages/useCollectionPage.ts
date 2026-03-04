@@ -1,5 +1,7 @@
 import { computed, ref, watch } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { RouteLocationRaw } from 'vue-router'
 
 import { useFeedback } from '@/composables/useFeedback'
 import { getArticleList, getCollectionDetail, getCollectionList } from '@/services/api/article'
@@ -14,7 +16,19 @@ function parsePositiveNumber(value: unknown): number | undefined {
   return undefined
 }
 
-export function useCollectionPage() {
+interface UseCollectionPageResult {
+  collection: Ref<CollectionItem | null>
+  otherCollections: Ref<CollectionItem[]>
+  list: Ref<ArticleItem[]>
+  total: Ref<number>
+  page: Ref<number>
+  pageSize: Ref<number>
+  loading: ComputedRef<boolean>
+  notFound: Ref<boolean>
+  handlePageChange: (targetPage: number) => void
+}
+
+export function useCollectionPage(): UseCollectionPageResult {
   const feedback = useFeedback()
   const route = useRoute()
   const router = useRouter()
@@ -92,7 +106,7 @@ export function useCollectionPage() {
     await Promise.all([fetchCollectionMeta(id), fetchArticleList(id, currentPage)])
   }
 
-  function buildCollectionRoute(targetPage = 1) {
+  function buildCollectionRoute(targetPage = 1): RouteLocationRaw {
     const id = collectionId.value
     if (!id) {
       return { name: 'home' as const }
