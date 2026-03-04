@@ -5,7 +5,7 @@ import AppImage from '@/components/common/AppImage.vue'
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
 import { useFeedback } from '@/composables/useFeedback'
 import { useHomePage } from '@/composables/pages/useHomePage'
-import { getHomeRecommendations } from '@/services/article'
+import { getHomeRecommendations } from '@/services/api/article'
 import type { ArticleItem, CategoryItem, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 

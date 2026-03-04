@@ -10,7 +10,7 @@ import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
   uploadAdminArticleMarkdown,
-} from '@/services/adminArticle'
+} from '@/services/api/adminArticle'
 import type { AdminArticlePayload } from '@/types/article'
 import type { CategoryOption } from '@/utils/article'
 import { resolveTempAsset } from '@/utils/assets'

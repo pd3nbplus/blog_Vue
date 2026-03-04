@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
 import { useArticleListPage } from '@/composables/pages/useArticleListPage'
-import { getHomeRecommendations } from '@/services/article'
+import { getHomeRecommendations } from '@/services/api/article'
 import type { ArticleItem, CategoryItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 

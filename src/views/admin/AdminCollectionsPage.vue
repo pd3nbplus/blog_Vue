@@ -5,14 +5,14 @@ import type { FormInstance } from 'ant-design-vue'
 
 import AppImage from '@/components/common/AppImage.vue'
 import { useFeedback } from '@/composables/useFeedback'
-import { getAdminArticleList } from '@/services/adminArticle'
+import { getAdminArticleList } from '@/services/api/adminArticle'
 import {
   createAdminCollection,
   deleteAdminCollection,
   getAdminCollectionDetail,
   getAdminCollectionList,
   updateAdminCollection,
-} from '@/services/adminCollection'
+} from '@/services/api/adminCollection'
 import type { AdminCollectionPayload, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 

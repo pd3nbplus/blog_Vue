@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { getProfile, login, logout } from '@/services/user'
+import { getProfile, login, logout } from '@/services/api/user'
 import type { UserProfile } from '@/types/user'
 import { tokenStorage } from '@/utils/storage'
 

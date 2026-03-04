@@ -1,4 +1,4 @@
-import type { LocalImageUploadMapping } from '@/services/adminArticle'
+import type { LocalImageUploadMapping } from '@/services/api/adminArticle'
 
 type MatchStatus = 'matched' | 'unmatched' | 'ambiguous'
 type MatchStrategy = 'path' | 'filename'

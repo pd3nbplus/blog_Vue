@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { useFeedback } from '@/composables/useFeedback'
-import { approveAdminComment, deleteAdminComment, getAdminCommentList } from '@/services/admin'
+import { approveAdminComment, deleteAdminComment, getAdminCommentList } from '@/services/api/admin'
 import type { AdminCommentItem } from '@/types/admin'
 
 const feedback = useFeedback()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getApiErrorMessage } from '@/services/request'
+import { getApiErrorMessage } from '@/services/http'
 
 describe('getApiErrorMessage', () => {
   it('prefers backend message in response envelope', () => {

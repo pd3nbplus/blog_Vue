@@ -10,7 +10,7 @@ import AppImage from '@/components/common/AppImage.vue'
 import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
-} from '@/services/adminArticle'
+} from '@/services/api/adminArticle'
 import type { AdminArticlePayload, CategoryItem } from '@/types/article'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
 import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'

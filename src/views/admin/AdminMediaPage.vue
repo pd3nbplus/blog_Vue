@@ -19,7 +19,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import AppImage from '@/components/common/AppImage.vue'
 import { useFeedback } from '@/composables/useFeedback'
-import { getAdminMediaList, renameAdminMediaFile, uploadAdminMediaFile } from '@/services/admin'
+import { getAdminMediaList, renameAdminMediaFile, uploadAdminMediaFile } from '@/services/api/admin'
 import type { AdminMediaFileItem, AdminMediaListResult } from '@/types/admin'
 
 type ViewMode = 'icon' | 'list' | 'column' | 'gallery'

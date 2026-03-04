@@ -5,7 +5,7 @@ import { UploadOutlined } from '@ant-design/icons-vue'
 
 import AppImage from '@/components/common/AppImage.vue'
 import { useFeedback } from '@/composables/useFeedback'
-import { getAdminProfile, updateAdminPassword, updateAdminProfile, uploadAdminMediaFile } from '@/services/admin'
+import { getAdminProfile, updateAdminPassword, updateAdminProfile, uploadAdminMediaFile } from '@/services/api/admin'
 import { resolveTempAsset } from '@/utils/assets'
 
 const feedback = useFeedback()

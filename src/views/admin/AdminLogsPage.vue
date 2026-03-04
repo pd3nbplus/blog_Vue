@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
-import { getAdminLogList } from '@/services/admin'
+import { getAdminLogList } from '@/services/api/admin'
 import type { AdminLogItem, AdminLogLevel, AdminLogSource } from '@/types/admin'
 
 type LevelFilter = 'ALL' | AdminLogLevel

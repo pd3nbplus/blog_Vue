@@ -3,7 +3,7 @@ import { computed, onActivated, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useFeedback } from '@/composables/useFeedback'
-import { getAdminDashboardSummary } from '@/services/adminArticle'
+import { getAdminDashboardSummary } from '@/services/api/adminArticle'
 import { useUserStore } from '@/stores/modules/user'
 import type { AdminDashboardSummary } from '@/types/admin'
 

@@ -4,7 +4,7 @@ import { CaretRightFilled, DeleteOutlined, DownCircleOutlined, EditOutlined, Plu
 import type { UploadProps } from 'ant-design-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
-import { createAdminCategory, deleteAdminCategory, getAdminCategoryTree, updateAdminCategory } from '@/services/admin'
+import { createAdminCategory, deleteAdminCategory, getAdminCategoryTree, updateAdminCategory } from '@/services/api/admin'
 import type { CategoryItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 

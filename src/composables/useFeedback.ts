@@ -1,6 +1,6 @@
 import { message } from 'ant-design-vue'
 
-import { getApiErrorMessage } from '@/services/request'
+import { getApiErrorMessage } from '@/services/http'
 
 export function useFeedback() {
   function success(content: string) {

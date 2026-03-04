@@ -8,7 +8,7 @@ import {
   getAdminArticleList,
   type AdminArticleListQuery,
   updateAdminArticle,
-} from '@/services/adminArticle'
+} from '@/services/api/adminArticle'
 import type { AdminArticlePayload, ArticleDetail, ArticleItem } from '@/types/article'
 
 export const useAdminArticleStore = defineStore('adminArticle', () => {

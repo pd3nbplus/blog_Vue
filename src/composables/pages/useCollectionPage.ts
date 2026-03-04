@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useFeedback } from '@/composables/useFeedback'
-import { getArticleList, getCollectionDetail, getCollectionList } from '@/services/article'
+import { getArticleList, getCollectionDetail, getCollectionList } from '@/services/api/article'
 import type { ArticleItem, CollectionItem } from '@/types/article'
 
 function parsePositiveNumber(value: unknown): number | undefined {

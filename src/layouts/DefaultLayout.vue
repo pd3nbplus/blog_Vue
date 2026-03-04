@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme, type AppTheme } from '@/composables/useTheme'
-import { getCollectionList } from '@/services/article'
+import { getCollectionList } from '@/services/api/article'
 import { useArticleStore } from '@/stores/modules/article'
 import type { CollectionItem } from '@/types/article'
 

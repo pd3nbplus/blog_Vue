@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppImage from '@/components/common/AppImage.vue'
 import AdminArticleEditorPanel from '@/components/pages/admin/components/AdminArticleEditorPanel.vue'
 import { useAdminArticleManager } from '@/composables/pages/useAdminArticleManager'
-import type { AdminArticleOrderingField } from '@/services/adminArticle'
+import type { AdminArticleOrderingField } from '@/services/api/adminArticle'
 import type { ArticleItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 
