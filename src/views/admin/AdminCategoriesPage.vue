@@ -232,13 +232,13 @@ onMounted(() => {
           </button>
           <span v-else class="toggle-placeholder" aria-hidden="true" />
 
+          <CaretRightFilled v-if="row.depth > 0" class="child-prefix-icon" aria-hidden="true" />
           <img
             v-if="getIcon(row.item.icon_path)"
             :src="getIcon(row.item.icon_path) || ''"
             alt=""
             class="category-icon"
           />
-          <CaretRightFilled v-if="row.depth > 0" class="child-prefix-icon" aria-hidden="true" />
           <span class="category-name">{{ row.item.name }}</span>
         </div>
 
