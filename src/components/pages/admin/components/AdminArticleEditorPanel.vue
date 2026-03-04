@@ -10,7 +10,6 @@ import AppImage from '@/components/common/AppImage.vue'
 import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
-  uploadAdminArticleMarkdown,
 } from '@/services/adminArticle'
 import type { AdminArticlePayload, CategoryItem } from '@/types/article'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
@@ -117,6 +116,7 @@ const markdownUploadList = ref<Array<{ uid: string; name: string; status: 'done'
 const coverUploading = ref(false)
 const selectedCoverFile = ref<File | null>(null)
 const coverUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>([])
+const localCoverPreviewUrl = ref('')
 const markdownTextareaRef = ref<unknown>(null)
 const previewScrollRef = ref<HTMLElement | null>(null)
 let editorTextareaEl: HTMLTextAreaElement | null = null
@@ -183,6 +183,7 @@ watch(
   () => props.initialValue,
   () => {
     syncFormFromInitialValue()
+    resetAssetSelectionState()
   },
   { immediate: true },
 )
@@ -289,6 +290,17 @@ function resetLocalImageDialog() {
   localImageDialogOpen.value = false
 }
 
+function resetAssetSelectionState() {
+  selectedMarkdownFile.value = null
+  markdownUploadList.value = []
+  selectedCoverFile.value = null
+  coverUploadList.value = []
+  if (localCoverPreviewUrl.value) {
+    URL.revokeObjectURL(localCoverPreviewUrl.value)
+    localCoverPreviewUrl.value = ''
+  }
+}
+
 const handleMarkdownBeforeUpload: UploadProps['beforeUpload'] = (file) => {
   if (markdownFileUploading.value) {
     message.warning('Markdown 正在解析中，请稍候')
@@ -297,7 +309,7 @@ const handleMarkdownBeforeUpload: UploadProps['beforeUpload'] = (file) => {
   const selected = file as File
   selectedMarkdownFile.value = selected
   markdownUploadList.value = [{ uid: selected.name, name: selected.name, status: 'done' }]
-  void handleMarkdownFileUpload(selected)
+  void applyMarkdownFileToForm(selected)
   return false
 }
 
@@ -312,29 +324,41 @@ function extractMarkdownBaseName(filename: string): string {
   return normalized.replace(/\.[^./\\]+$/, '').trim()
 }
 
-async function handleMarkdownFileUpload(fileOverride?: File | null) {
-  const file = fileOverride ?? selectedMarkdownFile.value
-  if (!file) {
-    message.warning('请先选择 Markdown 文件')
-    return
-  }
+function sanitizeFileStemForPath(filename: string): string {
+  const stem = extractMarkdownBaseName(filename)
+  const lowered = stem.toLowerCase().trim()
+  const sanitized = lowered.replace(/[^a-z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
+  return sanitized || 'article'
+}
+
+function inferSourceMarkdownPath(filename: string): string {
+  const now = new Date()
+  const dateDir = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+  const safeStem = sanitizeFileStemForPath(filename)
+  return `/static/temp/uploads/${dateDir}/${safeStem}.md`
+}
+
+async function readTextFromFile(file: File): Promise<string> {
+  return file.text()
+}
+
+async function applyMarkdownFileToForm(file: File) {
   markdownFileUploading.value = true
   try {
-    const data = await uploadAdminArticleMarkdown({
-      file,
-      source_markdown_path: formState.source_markdown_path.trim() || undefined,
-    })
-    formState.markdown_content = data.markdown_content
-    formState.source_markdown_path = data.source_markdown_path
+    const text = await readTextFromFile(file)
+    formState.markdown_content = text
+    if (!formState.source_markdown_path.trim()) {
+      formState.source_markdown_path = inferSourceMarkdownPath(file.name)
+    }
     if (!formState.title.trim()) {
       const inferredTitle = extractMarkdownBaseName(file.name)
       if (inferredTitle) {
         formState.title = inferredTitle
       }
     }
-    message.success('Markdown 文件已解析并同步到表单')
+    message.success('Markdown 已载入编辑器，发布时才会提交到后端')
   } catch {
-    message.error('Markdown 文件上传失败')
+    message.error('Markdown 文件读取失败')
   } finally {
     markdownFileUploading.value = false
   }
@@ -348,17 +372,26 @@ const handleCoverBeforeUpload: UploadProps['beforeUpload'] = (file) => {
   const selected = file as File
   selectedCoverFile.value = selected
   coverUploadList.value = [{ uid: selected.name, name: selected.name, status: 'done' }]
-  void handleCoverFileUpload(selected)
+  if (localCoverPreviewUrl.value) {
+    URL.revokeObjectURL(localCoverPreviewUrl.value)
+  }
+  localCoverPreviewUrl.value = URL.createObjectURL(selected)
+  message.success('封面已选择，发布时自动上传')
   return false
 }
 
 const handleCoverRemove: UploadProps['onRemove'] = () => {
   selectedCoverFile.value = null
   coverUploadList.value = []
+  if (localCoverPreviewUrl.value) {
+    URL.revokeObjectURL(localCoverPreviewUrl.value)
+    localCoverPreviewUrl.value = ''
+  }
   return true
 }
 
 const coverPreview = computed(() => {
+  if (localCoverPreviewUrl.value) return localCoverPreviewUrl.value
   const value = formState.cover_path.trim()
   if (!value) return ''
   if (value.startsWith('http://') || value.startsWith('https://')) return value
@@ -367,22 +400,29 @@ const coverPreview = computed(() => {
   return resolveTempAsset(value)
 })
 
-async function handleCoverFileUpload(fileOverride?: File | null) {
-  const file = fileOverride ?? selectedCoverFile.value
-  if (!file) {
-    message.warning('请先选择封面图片')
-    return
-  }
+async function uploadCoverBeforeSubmit(payload: AdminArticlePayload): Promise<boolean> {
+  const file = selectedCoverFile.value
+  if (!file) return true
+
   coverUploading.value = true
   try {
     const data = await uploadAdminArticleCover({
       file,
-      source_markdown_path: formState.source_markdown_path.trim() || undefined,
+      source_markdown_path: payload.source_markdown_path.trim() || undefined,
     })
+    payload.cover_path = data.cover_path
     formState.cover_path = data.cover_path
-    message.success('封面图片上传成功')
+    selectedCoverFile.value = null
+    coverUploadList.value = []
+    if (localCoverPreviewUrl.value) {
+      URL.revokeObjectURL(localCoverPreviewUrl.value)
+      localCoverPreviewUrl.value = ''
+    }
+    message.success('封面图片已上传')
+    return true
   } catch {
     message.error('封面图片上传失败')
+    return false
   } finally {
     coverUploading.value = false
   }
@@ -577,6 +617,7 @@ onBeforeUnmount(() => {
     editorTextareaEl.removeEventListener('scroll', handleEditorScroll)
   }
   editorTextareaEl = null
+  resetAssetSelectionState()
 })
 
 watch(
@@ -601,6 +642,11 @@ watch(
 )
 
 async function handleConfirm() {
+  if (markdownFileUploading.value || coverUploading.value) {
+    message.warning('资源处理中，请稍候再提交')
+    return
+  }
+
   const formInstance = formRef.value
   if (formInstance?.validate) {
     await formInstance.validate()
@@ -627,13 +673,17 @@ async function handleConfirm() {
     return
   }
 
+  const uploaded = await uploadCoverBeforeSubmit(payload)
+  if (!uploaded) return
   emit('submit', payload)
 }
 
-function handleSkipUploadAndSubmit() {
+async function handleSkipUploadAndSubmit() {
   const payload = pendingSubmitPayload.value
   resetLocalImageDialog()
   if (payload) {
+    const uploaded = await uploadCoverBeforeSubmit(payload)
+    if (!uploaded) return
     emit('submit', payload)
   }
 }
@@ -685,6 +735,8 @@ async function handleUploadAndSubmit() {
 
   const submitPayload = { ...payload }
   resetLocalImageDialog()
+  const uploaded = await uploadCoverBeforeSubmit(submitPayload)
+  if (!uploaded) return
   emit('submit', submitPayload)
 }
 </script>
