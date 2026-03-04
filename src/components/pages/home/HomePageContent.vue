@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
         <div v-if="pinnedCollections.length" class="pinned-collections app-surface-card">
           <div class="pinned-collections-header">
             <h2>置顶合集</h2>
-            <span>精选专题</span>
+            <span class="collection-section-pill">精选专题</span>
           </div>
           <ul>
             <li v-for="collection in pinnedCollections" :key="collection.id">
@@ -316,17 +316,19 @@ onBeforeUnmount(() => {
   margin: 0;
 }
 
-.pinned-collections-header span {
+.collection-section-pill {
   display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #145ca8 35%, var(--border));
   background: color-mix(in srgb, #145ca8 14%, var(--surface));
-  color: #145ca8;
-  font-size: 0.74rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--primary);
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1;
+  padding: 4px 10px;
+  letter-spacing: 0.02em;
 }
 
 .pinned-collections ul {
