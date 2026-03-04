@@ -18,6 +18,7 @@ const navItems = [
   { label: '评论管理', path: '/admin/manage_comments/' },
   { label: '分类管理', path: '/admin/manage_categories/' },
   { label: '媒体库', path: '/admin/pic_management/' },
+  { label: '日志管理', path: '/admin/manage_logs/' },
   { label: '个人设置', path: '/admin/personal_settings/' },
 ]
 

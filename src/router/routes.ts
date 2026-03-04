@@ -10,6 +10,7 @@ import AdminDashboardPage from '@/views/admin/AdminDashboardPage.vue'
 import AdminLoginPage from '@/views/admin/AdminLoginPage.vue'
 import AdminLogoutPage from '@/views/admin/AdminLogoutPage.vue'
 import AdminMediaPage from '@/views/admin/AdminMediaPage.vue'
+import AdminLogsPage from '@/views/admin/AdminLogsPage.vue'
 import AdminPersonalSettingsPage from '@/views/admin/AdminPersonalSettingsPage.vue'
 import AdminSuperRedirectPage from '@/views/admin/AdminSuperRedirectPage.vue'
 
@@ -72,6 +73,11 @@ export const routes: RouteRecordRaw[] = [
         path: 'pic_management/',
         name: 'admin-media-root',
         component: AdminMediaPage,
+      },
+      {
+        path: 'manage_logs/',
+        name: 'admin-manage-logs',
+        component: AdminLogsPage,
       },
       {
         path: 'pic_management/:pathMatch(.*)*',

@@ -4,6 +4,7 @@ import type { CategoryItem } from '@/types/article'
 import type {
   AdminCategoryPayload,
   AdminCommentItem,
+  AdminLogListResult,
   AdminMediaListResult,
 } from '@/types/admin'
 import type { UserProfile } from '@/types/user'
@@ -106,4 +107,16 @@ export async function updateAdminProfile(payload: {
 
 export async function updateAdminPassword(payload: { current_password: string; new_password: string }) {
   return requestData<null>(request.post('/admin/profile/password/', payload))
+}
+
+export interface AdminLogQuery {
+  page?: number
+  page_size?: number
+  level?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
+  q?: string
+  source?: 'audit' | 'application' | 'django'
+}
+
+export async function getAdminLogList(params: AdminLogQuery) {
+  return requestData<AdminLogListResult>(request.get('/admin/logs/', { params }))
 }
