@@ -1,18 +1,27 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-import AdminLayout from '@/layouts/AdminLayout.vue'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AdminArticlePage from '@/views/admin/AdminArticlePage.vue'
-import AdminCategoriesPage from '@/views/admin/AdminCategoriesPage.vue'
-import AdminCommentsPage from '@/views/admin/AdminCommentsPage.vue'
-import AdminCollectionsPage from '@/views/admin/AdminCollectionsPage.vue'
-import AdminDashboardPage from '@/views/admin/AdminDashboardPage.vue'
-import AdminLoginPage from '@/views/admin/AdminLoginPage.vue'
-import AdminLogoutPage from '@/views/admin/AdminLogoutPage.vue'
-import AdminMediaPage from '@/views/admin/AdminMediaPage.vue'
-import AdminLogsPage from '@/views/admin/AdminLogsPage.vue'
-import AdminPersonalSettingsPage from '@/views/admin/AdminPersonalSettingsPage.vue'
-import AdminSuperRedirectPage from '@/views/admin/AdminSuperRedirectPage.vue'
+const AdminLayout = () => import('@/layouts/AdminLayout.vue')
+const DefaultLayout = () => import('@/layouts/DefaultLayout.vue')
+
+const AdminArticlePage = () => import('@/views/admin/AdminArticlePage.vue')
+const AdminCategoriesPage = () => import('@/views/admin/AdminCategoriesPage.vue')
+const AdminCommentsPage = () => import('@/views/admin/AdminCommentsPage.vue')
+const AdminCollectionsPage = () => import('@/views/admin/AdminCollectionsPage.vue')
+const AdminDashboardPage = () => import('@/views/admin/AdminDashboardPage.vue')
+const AdminLoginPage = () => import('@/views/admin/AdminLoginPage.vue')
+const AdminLogoutPage = () => import('@/views/admin/AdminLogoutPage.vue')
+const AdminMediaPage = () => import('@/views/admin/AdminMediaPage.vue')
+const AdminLogsPage = () => import('@/views/admin/AdminLogsPage.vue')
+const AdminPersonalSettingsPage = () => import('@/views/admin/AdminPersonalSettingsPage.vue')
+const AdminSuperRedirectPage = () => import('@/views/admin/AdminSuperRedirectPage.vue')
+
+const HomePage = () => import('@/views/home/HomePage.vue')
+const ArticleListPage = () => import('@/views/article/ArticleListPage.vue')
+const CollectionPage = () => import('@/views/collection/CollectionPage.vue')
+const AboutPage = () => import('@/views/article/AboutPage.vue')
+const ContactPage = () => import('@/views/article/ContactPage.vue')
+const ArticleDetailPage = () => import('@/views/article/ArticleDetailPage.vue')
+const LoginPage = () => import('@/views/user/LoginPage.vue')
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -100,32 +109,32 @@ export const routes: RouteRecordRaw[] = [
     component: DefaultLayout,
     children: [
       { path: '', redirect: { name: 'home' } },
-      { path: 'index/', name: 'home', component: () => import('@/views/home/HomePage.vue') },
+      { path: 'index/', name: 'home', component: HomePage },
       { path: 'articles', redirect: { name: 'article-list' } },
-      { path: 'articles/', name: 'article-list', component: () => import('@/views/article/ArticleListPage.vue') },
+      { path: 'articles/', name: 'article-list', component: ArticleListPage },
       {
         path: 'category/:categoryId(\\d+)/',
         name: 'category',
-        component: () => import('@/views/article/ArticleListPage.vue'),
+        component: ArticleListPage,
       },
       {
         path: 'collections/:collectionId(\\d+)/',
         name: 'collection',
-        component: () => import('@/views/collection/CollectionPage.vue'),
+        component: CollectionPage,
       },
-      { path: 'query/', name: 'query', component: () => import('@/views/article/ArticleListPage.vue') },
-      { path: 'about/', name: 'about', component: () => import('@/views/article/AboutPage.vue') },
-      { path: 'contact/', name: 'contact', component: () => import('@/views/article/ContactPage.vue') },
+      { path: 'query/', name: 'query', component: ArticleListPage },
+      { path: 'about/', name: 'about', component: AboutPage },
+      { path: 'contact/', name: 'contact', component: ContactPage },
       {
         path: 'article_detail/:id(\\d+)/',
         name: 'article-detail',
-        component: () => import('@/views/article/ArticleDetailPage.vue'),
+        component: ArticleDetailPage,
       },
       {
         path: 'articles/:id(\\d+)',
         redirect: (to) => ({ name: 'article-detail', params: { id: to.params.id } }),
       },
-      { path: 'login', name: 'login', component: () => import('@/views/user/LoginPage.vue') },
+      { path: 'login', name: 'login', component: LoginPage },
     ],
   },
 ]
