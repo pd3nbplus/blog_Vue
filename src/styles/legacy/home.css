@@ -240,14 +240,14 @@
 }
 
 .personal-intro .like-btn .heart-icon {
-    color: var(--btn-text-on-success);
+    color: #ffffff !important;
     margin-left: 5px;
     font-size: 1.2rem; /* Adjust heart icon size */
     transition: color 0.2s ease;
 }
 
 .personal-intro .like-btn.liked .heart-icon {
-    color: var(--btn-danger) !important;
+    color: #ff0000 !important;
 }
 
 .personal-intro .like-btn:hover {
@@ -255,8 +255,12 @@
     transform: translateY(-1px);
 }
 
+.personal-intro .like-btn:hover .heart-icon {
+    color: #ffffff !important;
+}
+
 .personal-intro .like-btn.liked:hover .heart-icon {
-    color: var(--btn-danger) !important;
+    color: #ff0000 !important;
 }
 
 /* Popular Styles */
