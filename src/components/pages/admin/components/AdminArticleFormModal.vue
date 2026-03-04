@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { FormInstance } from 'ant-design-vue'
 import type { UploadProps } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
 
-import AppImage from '@/components/common/AppImage.vue'
 import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
@@ -14,10 +13,8 @@ import {
 } from '@/services/adminArticle'
 import type { AdminArticlePayload } from '@/types/article'
 import type { CategoryOption } from '@/utils/article'
-import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
-import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
+import { resolveTempAsset } from '@/utils/assets'
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
-import { renderMarkdownContent } from '@/utils/markdown'
 
 interface AdminArticleFormInput {
   title: string
@@ -33,21 +30,20 @@ interface AdminArticleFormInput {
 
 const props = withDefaults(
   defineProps<{
-    loading?: boolean
+    open: boolean
     submitting: boolean
     categoryOptions: CategoryOption[]
     initialValue?: Partial<AdminArticlePayload> | null
     editing: boolean
   }>(),
   {
-    loading: false,
     initialValue: null,
   },
 )
 
 const emit = defineEmits<{
+  'update:open': [value: boolean]
   submit: [value: AdminArticlePayload]
-  cancel: []
 }>()
 
 const formState = reactive<AdminArticleFormInput>({
@@ -114,15 +110,19 @@ const coverUploading = ref(false)
 const selectedCoverFile = ref<File | null>(null)
 const coverUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>([])
 
+// Keep form lifecycle isolated inside the modal component.
 watch(
-  () => props.initialValue,
-  () => {
+  () => [props.open, props.initialValue] as const,
+  ([open]) => {
+    if (!open) {
+      resetLocalImageDialog()
+      return
+    }
     syncFormFromInitialValue()
   },
   { immediate: true },
 )
 
-const HTML_IMAGE_SRC_PATTERN = /(<img\b[^>]*?\bsrc=["'])([^"']+)(["'][^>]*>)/gi
 const htmlImageRefPattern = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
 const fencedCodeBlockPattern = /```[\s\S]*?```|~~~[\s\S]*?~~~/g
 
@@ -337,39 +337,6 @@ function getPreviewStatusText(status: 'matched' | 'unmatched' | 'ambiguous'): st
   return '未匹配'
 }
 
-function rewriteCsdnImageSrcInHtml(html: string): string {
-  if (!html) return html
-  return html.replace(HTML_IMAGE_SRC_PATTERN, (_, prefix: string, src: string, suffix: string) => {
-    if (!isRemoteHttpImage(src) || !isCsdnImageHost(src)) return `${prefix}${src}${suffix}`
-    return `${prefix}${buildImageProxyUrl(src, BACKEND_ORIGIN)}${suffix}`
-  })
-}
-
-const previewHtml = computed(() => {
-  const rendered = renderMarkdownContent(formState.markdown_content || '')
-  return rewriteCsdnImageSrcInHtml(rendered.html)
-})
-
-const previewContainerRef = ref<HTMLElement | null>(null)
-
-watch(
-  previewHtml,
-  async () => {
-    await nextTick()
-    const container = previewContainerRef.value
-    if (!container) return
-    container.querySelectorAll('img').forEach((img) => {
-      const src = img.getAttribute('src') || ''
-      if (!src) return
-      if (isRemoteHttpImage(src)) {
-        img.setAttribute('referrerpolicy', 'no-referrer')
-      }
-      img.setAttribute('loading', 'lazy')
-    })
-  },
-  { immediate: true },
-)
-
 async function handleConfirm() {
   const formInstance = formRef.value
   if (formInstance?.validate) {
@@ -460,47 +427,79 @@ async function handleUploadAndSubmit() {
 </script>
 
 <template>
-  <section class="editor-page app-surface-card">
-    <div class="editor-head">
-      <div class="head-title">
-        <h2>{{ editing ? '编辑文章' : '新建文章' }}</h2>
-        <p>左侧编辑 Markdown 原文，右侧实时渲染预览</p>
-      </div>
-      <a-space>
-        <a-button :disabled="submitting" @click="emit('cancel')">返回列表</a-button>
-        <a-button type="primary" :loading="submitting" @click="handleConfirm">
-          {{ editing ? '保存修改' : '发布文章' }}
-        </a-button>
-      </a-space>
-    </div>
-
-    <a-spin :spinning="loading">
-      <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
-        <div class="meta-grid">
+  <a-modal
+    :open="open"
+    :title="editing ? '编辑文章' : '新建文章'"
+    :confirm-loading="submitting"
+    ok-text="确定"
+    cancel-text="取消"
+    @update:open="emit('update:open', $event)"
+    @ok="handleConfirm"
+  >
+    <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
+      <a-row :gutter="16">
+        <a-col :span="12">
           <a-form-item label="标题" name="title">
             <a-input v-model:value="formState.title" />
           </a-form-item>
+        </a-col>
+        <a-col :span="12">
           <a-form-item label="slug" name="slug">
             <a-input v-model:value="formState.slug" />
           </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="16">
+        <a-col :span="12">
           <a-form-item label="状态" name="status">
             <a-select v-model:value="formState.status" :options="statusOptions" />
           </a-form-item>
+        </a-col>
+        <a-col :span="12">
           <a-form-item label="分类">
-            <a-select v-model:value="formState.category" allow-clear :options="categoryOptions" placeholder="选择分类" />
+            <a-select
+              v-model:value="formState.category"
+              allow-clear
+              :options="categoryOptions"
+              placeholder="选择分类"
+            />
           </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-form-item label="摘要">
+        <a-textarea v-model:value="formState.summary" :rows="3" />
+      </a-form-item>
+
+      <a-form-item label="Markdown 正文" name="markdown_content">
+        <div class="upload-line">
+          <a-upload
+            :file-list="markdownUploadList"
+            :before-upload="handleMarkdownBeforeUpload"
+            :max-count="1"
+            accept=".md,.markdown,.txt,.html,.htm"
+            @remove="handleMarkdownRemove"
+          >
+            <a-button size="small">
+              <UploadOutlined />
+              选择 Markdown
+            </a-button>
+          </a-upload>
+          <a-button type="default" size="small" :loading="markdownFileUploading" @click="handleMarkdownFileUpload">
+            上传并解析 Markdown
+          </a-button>
         </div>
+        <a-textarea v-model:value="formState.markdown_content" :rows="12" />
+        <div v-if="detectedLocalRefs.length" class="local-image-tip">
+          检测到 {{ detectedLocalRefs.length }} 处本地图片引用，提交时将提示上传并自动处理引用路径。
+        </div>
+      </a-form-item>
 
-        <a-form-item label="摘要">
-          <a-textarea v-model:value="formState.summary" :rows="3" />
-        </a-form-item>
-
-        <div class="asset-grid">
-          <a-form-item label="来源 Markdown 路径" class="asset-item">
-            <a-input v-model:value="formState.source_markdown_path" placeholder="例如：深度学习/NLP/xxx.md" />
-          </a-form-item>
-          <a-form-item label="封面路径" class="asset-item">
-            <a-input v-model:value="formState.cover_path" placeholder="可填本地路径或外链 URL" />
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="封面路径">
+            <a-input v-model:value="formState.cover_path" />
             <div class="upload-line">
               <a-upload
                 :file-list="coverUploadList"
@@ -514,52 +513,25 @@ async function handleUploadAndSubmit() {
                   选择封面
                 </a-button>
               </a-upload>
-              <a-button type="default" size="small" :loading="coverUploading" @click="handleCoverFileUpload">上传封面</a-button>
+              <a-button type="default" size="small" :loading="coverUploading" @click="handleCoverFileUpload">
+                上传封面
+              </a-button>
             </div>
-            <AppImage v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" fallback-src="/img/hero-image.jpg" />
+            <img v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" />
           </a-form-item>
-        </div>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="来源 Markdown 路径">
+            <a-input v-model:value="formState.source_markdown_path" />
+          </a-form-item>
+        </a-col>
+      </a-row>
 
-        <a-form-item>
-          <a-checkbox v-model:checked="formState.is_pinned">置顶文章</a-checkbox>
-        </a-form-item>
-
-        <div class="editor-columns">
-          <section class="editor-column">
-            <a-form-item label="Markdown 正文" name="markdown_content">
-              <div class="upload-line">
-                <a-upload
-                  :file-list="markdownUploadList"
-                  :before-upload="handleMarkdownBeforeUpload"
-                  :max-count="1"
-                  accept=".md,.markdown,.txt,.html,.htm"
-                  @remove="handleMarkdownRemove"
-                >
-                  <a-button size="small">
-                    <UploadOutlined />
-                    选择 Markdown
-                  </a-button>
-                </a-upload>
-                <a-button type="default" size="small" :loading="markdownFileUploading" @click="handleMarkdownFileUpload">
-                  上传并解析 Markdown
-                </a-button>
-              </div>
-              <a-textarea v-model:value="formState.markdown_content" :auto-size="{ minRows: 22, maxRows: 42 }" />
-              <div v-if="detectedLocalRefs.length" class="local-image-tip">
-                检测到 {{ detectedLocalRefs.length }} 处本地图片引用，提交时将提示上传并自动处理引用路径。
-              </div>
-            </a-form-item>
-          </section>
-
-          <section class="editor-column preview-column">
-            <h3 class="preview-title">实时预览</h3>
-            <div v-if="!formState.markdown_content.trim()" class="preview-empty">在左侧输入 Markdown 后，这里会实时渲染结果。</div>
-            <article v-else ref="previewContainerRef" class="preview-markdown markdown-body" v-html="previewHtml" />
-          </section>
-        </div>
-      </a-form>
-    </a-spin>
-  </section>
+      <a-form-item>
+        <a-checkbox v-model:checked="formState.is_pinned">置顶</a-checkbox>
+      </a-form-item>
+    </a-form>
+  </a-modal>
 
   <a-modal
     :open="localImageDialogOpen"
@@ -620,98 +592,6 @@ async function handleUploadAndSubmit() {
 </template>
 
 <style scoped>
-@import '/css/github-markdown.min.css';
-
-.editor-page {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.editor-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.head-title h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.35rem;
-}
-
-.head-title p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 12px;
-}
-
-.asset-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 12px;
-}
-
-.asset-item {
-  min-width: 0;
-}
-
-.editor-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-}
-
-.editor-column {
-  min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  background: color-mix(in srgb, var(--surface-2) 35%, var(--surface));
-}
-
-.preview-column {
-  position: sticky;
-  top: 12px;
-}
-
-.preview-title {
-  margin: 0 0 10px;
-  color: var(--text);
-  font-size: 0.98rem;
-}
-
-.preview-empty {
-  color: var(--muted);
-  font-size: 0.86rem;
-  min-height: 12rem;
-  display: flex;
-  align-items: center;
-}
-
-.preview-markdown {
-  max-height: min(70vh, 46rem);
-  overflow: auto;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--surface) 88%, white 12%);
-  border: 1px solid var(--border);
-  padding: 14px;
-}
-
-.preview-markdown :deep(img) {
-  max-width: 100%;
-  height: auto;
-}
-
 .local-image-tip {
   margin-top: 8px;
   color: var(--btn-warning);
@@ -723,7 +603,6 @@ async function handleUploadAndSubmit() {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  flex-wrap: wrap;
 }
 
 .cover-preview {
@@ -751,6 +630,10 @@ async function handleUploadAndSubmit() {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 12px;
+}
+
+:deep(.ant-modal) {
+  width: min(92vw, 56rem) !important;
 }
 
 .ref-list ul {
@@ -797,17 +680,5 @@ async function handleUploadAndSubmit() {
 .ref-detail {
   color: var(--muted);
   font-size: 12px;
-}
-
-@media (max-width: 1080px) {
-  .meta-grid,
-  .asset-grid,
-  .editor-columns {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .preview-column {
-    position: static;
-  }
 }
 </style>
