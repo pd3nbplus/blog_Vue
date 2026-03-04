@@ -140,6 +140,17 @@ onMounted(() => {
       </a-space>
     </div>
 
+    <a-collapse class="info-collapse app-surface-card" :bordered="false">
+      <a-collapse-panel key="log-guide" header="日志分类说明（点击展开）">
+        <div class="info-content">
+          <p class="info-item"><strong>审计日志（audit）</strong>：用户登录、登出、资料修改、密码修改、后台 API 操作轨迹。</p>
+          <p class="info-item"><strong>应用日志（application）</strong>：业务代码运行过程中的提示、告警和异常，便于排查功能问题。</p>
+          <p class="info-item"><strong>Django日志（django）</strong>：Django/服务框架层产生的请求与系统日志，便于基础设施诊断。</p>
+          <p class="info-item"><strong>等级建议</strong>：INFO 常规记录，WARNING 需要关注，ERROR/CRITICAL 优先处理。</p>
+        </div>
+      </a-collapse-panel>
+    </a-collapse>
+
     <div class="filter-panel app-surface-card">
       <a-input
         v-model:value="keyword"
@@ -227,6 +238,27 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
+.info-collapse {
+  padding: 0;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+
+.info-item strong {
+  color: var(--text);
+}
+
 .filter-panel {
   display: flex;
   gap: 10px;
@@ -308,6 +340,15 @@ onMounted(() => {
 
 :deep(.log-row-critical td) {
   background: color-mix(in srgb, #eb2f96 10%, var(--surface));
+}
+
+:deep(.info-collapse .ant-collapse-header) {
+  color: var(--text) !important;
+  font-weight: 600;
+}
+
+:deep(.info-collapse .ant-collapse-content-box) {
+  padding-top: 0 !important;
 }
 
 @media (max-width: 900px) {
