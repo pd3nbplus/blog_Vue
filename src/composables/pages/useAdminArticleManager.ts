@@ -16,6 +16,8 @@ const DEFAULT_ORDERING_FIELD: AdminArticleOrderingField = 'published_at'
 const DEFAULT_ORDERING_DIRECTION: AdminArticleOrderingDirection = 'desc'
 type AntSortOrder = 'ascend' | 'descend' | null
 
+// Keep inferred return object types for downstream usage without duplicating a large interface.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useAdminArticleManager() {
   const adminArticleStore = useAdminArticleStore()
   const feedback = useFeedback()
@@ -33,7 +35,7 @@ export function useAdminArticleManager() {
   const categoryOptions = computed(() => flattenCategoryTreeToOptions(categories.value))
   const categoryPathMap = computed(() => {
     const map = new Map<number, string>()
-    const walk = (nodes: CategoryItem[], parentPath: string | null) => {
+    const walk = (nodes: CategoryItem[], parentPath: string | null): void => {
       for (const node of nodes) {
         const path = parentPath ? `${parentPath} - ${node.name}` : node.name
         map.set(node.id, path)
@@ -77,7 +79,7 @@ export function useAdminArticleManager() {
     return { field, direction }
   }
 
-  function syncFilterFromRoute() {
+  function syncFilterFromRoute(): void {
     const q = route.query.q
     const status = route.query.status
     const category = route.query.category
@@ -99,7 +101,7 @@ export function useAdminArticleManager() {
     pageSize.value = FIXED_PAGE_SIZE
   }
 
-  async function syncRouteQuery(currentPage: number) {
+  async function syncRouteQuery(currentPage: number): Promise<void> {
     const q = keyword.value.trim()
     const status = statusFilter.value
     const category = categoryFilter.value
@@ -116,7 +118,7 @@ export function useAdminArticleManager() {
     })
   }
 
-  async function fetchList(currentPage = 1, syncQuery = false) {
+  async function fetchList(currentPage = 1, syncQuery = false): Promise<void> {
     if (syncQuery) {
       await syncRouteQuery(currentPage)
     }
@@ -134,7 +136,7 @@ export function useAdminArticleManager() {
     }
   }
 
-  async function fetchCategories() {
+  async function fetchCategories(): Promise<void> {
     try {
       const res = await getCategoryTree()
       categories.value = res.data
@@ -143,17 +145,17 @@ export function useAdminArticleManager() {
     }
   }
 
-  function handlePageChange(currentPage: number) {
+  function handlePageChange(currentPage: number): void {
     void fetchList(currentPage, true)
   }
 
-  function clearKeywordSearchTimer() {
+  function clearKeywordSearchTimer(): void {
     if (!keywordSearchTimer) return
     clearTimeout(keywordSearchTimer)
     keywordSearchTimer = null
   }
 
-  function handleKeywordInput(value: string) {
+  function handleKeywordInput(value: string): void {
     keyword.value = value
     clearKeywordSearchTimer()
     keywordSearchTimer = setTimeout(() => {
@@ -161,17 +163,17 @@ export function useAdminArticleManager() {
     }, KEYWORD_DEBOUNCE_MS)
   }
 
-  function handleKeywordEnter() {
+  function handleKeywordEnter(): void {
     clearKeywordSearchTimer()
     void fetchList(1, true)
   }
 
-  function applyFilters() {
+  function applyFilters(): void {
     clearKeywordSearchTimer()
     void fetchList(1, true)
   }
 
-  function resetFilters() {
+  function resetFilters(): void {
     clearKeywordSearchTimer()
     keyword.value = ''
     statusFilter.value = undefined
@@ -203,12 +205,12 @@ export function useAdminArticleManager() {
     void fetchList(1, true)
   }
 
-  function setupCreateEditor() {
+  function setupCreateEditor(): void {
     editingId.value = null
     editingFormValue.value = null
   }
 
-  async function setupEditEditor(id: number) {
+  async function setupEditEditor(id: number): Promise<void> {
     editorLoading.value = true
     try {
       const detail = await adminArticleStore.fetchDetail(id)
@@ -232,7 +234,7 @@ export function useAdminArticleManager() {
     }
   }
 
-  async function setupEditorFromRoute() {
+  async function setupEditorFromRoute(): Promise<void> {
     if (route.path === '/admin/create_article/') {
       setupCreateEditor()
       return
@@ -246,7 +248,7 @@ export function useAdminArticleManager() {
     await setupEditEditor(id)
   }
 
-  async function handleSubmit(payload: AdminArticlePayload) {
+  async function handleSubmit(payload: AdminArticlePayload): Promise<void> {
     try {
       if (editingId.value) {
         await adminArticleStore.updateArticle(editingId.value, payload)
@@ -266,7 +268,7 @@ export function useAdminArticleManager() {
     }
   }
 
-  async function handleArchive(id: number) {
+  async function handleArchive(id: number): Promise<void> {
     try {
       await adminArticleStore.archiveArticle(id)
       feedback.success('文章删除成功')
@@ -276,7 +278,7 @@ export function useAdminArticleManager() {
     }
   }
 
-  async function handleCancelEditor() {
+  async function handleCancelEditor(): Promise<void> {
     await router.replace('/admin/manage_articles/?page=1&page_size=15&ordering=-published_at')
   }
 
