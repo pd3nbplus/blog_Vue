@@ -101,6 +101,10 @@ function isEscapedAt(input: string, index: number): boolean {
   return backslashCount % 2 === 1
 }
 
+function buildMathPlaceholderToken(placeholders: MathPlaceholderMap): string {
+  return `BLOGMATHTOKEN${placeholders.size}PLACEHOLDER`
+}
+
 function protectMathBlocks(content: string, placeholders: MathPlaceholderMap): string {
   if (!content) return content
   let result = ''
@@ -134,11 +138,61 @@ function protectMathBlocks(content: string, placeholders: MathPlaceholderMap): s
     }
 
     result += content.slice(cursor, openIndex)
-    const token = `BLOGMATHTOKEN${placeholders.size}PLACEHOLDER`
+    const token = buildMathPlaceholderToken(placeholders)
     const segment = content.slice(openIndex, closeIndex + 2)
     placeholders.set(token, segment)
     result += token
     cursor = closeIndex + 2
+  }
+
+  return result
+}
+
+function protectInlineMath(content: string, placeholders: MathPlaceholderMap): string {
+  if (!content) return content
+  let result = ''
+  let cursor = 0
+
+  while (cursor < content.length) {
+    const openIndex = content.indexOf('$', cursor)
+    if (openIndex < 0) {
+      result += content.slice(cursor)
+      break
+    }
+
+    if (isEscapedAt(content, openIndex) || content[openIndex + 1] === '$') {
+      result += content.slice(cursor, openIndex + 1)
+      cursor = openIndex + 1
+      continue
+    }
+
+    let closeIndex = -1
+    for (let i = openIndex + 1; i < content.length; i += 1) {
+      if (content[i] === '\n' || content[i] === '\r') break
+      if (content[i] === '$' && !isEscapedAt(content, i) && content[i - 1] !== '$') {
+        closeIndex = i
+        break
+      }
+    }
+
+    if (closeIndex < 0) {
+      result += content.slice(cursor, openIndex + 1)
+      cursor = openIndex + 1
+      continue
+    }
+
+    const inner = content.slice(openIndex + 1, closeIndex)
+    if (!inner.trim()) {
+      result += content.slice(cursor, closeIndex + 1)
+      cursor = closeIndex + 1
+      continue
+    }
+
+    result += content.slice(cursor, openIndex)
+    const token = buildMathPlaceholderToken(placeholders)
+    placeholders.set(token, `$${inner}$`)
+    result += token
+    cursor = closeIndex + 1
   }
 
   return result
@@ -158,7 +212,8 @@ function normalizeMathBlocksOutsideCode(markdownContent: string): { content: str
     if (start > cursor) {
       const plain = normalizeMathDelimiters(content.slice(cursor, start))
       const normalizedMath = normalizeBlockMathMarkers(plain)
-      parts.push(protectMathBlocks(normalizedMath, placeholders))
+      const protectedBlocks = protectMathBlocks(normalizedMath, placeholders)
+      parts.push(protectInlineMath(protectedBlocks, placeholders))
     }
     parts.push(matched)
     cursor = end
@@ -167,7 +222,8 @@ function normalizeMathBlocksOutsideCode(markdownContent: string): { content: str
   if (cursor < content.length) {
     const plain = normalizeMathDelimiters(content.slice(cursor))
     const normalizedMath = normalizeBlockMathMarkers(plain)
-    parts.push(protectMathBlocks(normalizedMath, placeholders))
+    const protectedBlocks = protectMathBlocks(normalizedMath, placeholders)
+    parts.push(protectInlineMath(protectedBlocks, placeholders))
   }
 
   return {

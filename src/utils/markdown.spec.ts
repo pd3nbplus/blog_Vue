@@ -53,4 +53,20 @@ $$`
     expect(result.html).toContain('$$\\tilde{h}_{\\tau+1}^{n-1}')
     expect(result.html).not.toContain('<em>')
   })
+
+  it('should preserve inline math with underscores and chinese text', () => {
+    const content = '将$\\ddot{y_t}对\\ddot{x}_{t1},\\ddot{x}_{t2}$的回归'
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('$\\ddot{y_t}对\\ddot{x}_{t1},\\ddot{x}_{t2}$')
+    expect(result.html).not.toContain('<em>{t1}')
+  })
+
+  it('should preserve multiple inline formulas in one sentence', () => {
+    const content =
+      '原回归方程的$\\hat{\\beta_1},\\hat{\\beta_2}$,即$x_{t1}$变化一单位,$y_t$变化$\\hat{\\beta_1}$单位'
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('$\\hat{\\beta_1},\\hat{\\beta_2}$')
+    expect(result.html).toContain('$x_{t1}$')
+    expect(result.html).toContain('$\\hat{\\beta_1}$')
+  })
 })
