@@ -173,7 +173,7 @@ export function useAdminArticleEditorPanel(
     const now = new Date()
     const dateDir = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
     const safeStem = sanitizeFileStemForPath(filename)
-    return `/static/temp/uploads/${dateDir}/${safeStem}.md`
+    return `/media/articles/uploads/${dateDir}/${safeStem}.md`
   }
   async function readTextFromFile(file: File): Promise<string> {
     return file.text()

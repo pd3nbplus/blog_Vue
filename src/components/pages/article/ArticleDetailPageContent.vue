@@ -74,17 +74,25 @@ function resolveMarkdownImageSrc(rawSrc: string, sourceMarkdownPath: string): st
   if (/^(https?:)?\/\//i.test(src)) return src
   if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('#')) return src
 
+  const normalizedSource = normalizeRelativePath(sourceMarkdownPath || '')
+  const isLegacySource = normalizedSource.startsWith('static/temp/')
+  const sourceRoot = isLegacySource ? '/static/temp' : '/media/articles'
+  const sourceDir =
+    normalizedSource && normalizedSource.includes('/')
+      ? normalizedSource.slice(0, normalizedSource.lastIndexOf('/') + 1).replace(/^(static\/temp\/|media\/articles\/)/, '')
+      : ''
+
   if (src.startsWith('/')) {
     if (src.startsWith('/static/') || src.startsWith('/media/')) {
       return `${BACKEND_ORIGIN}${src}`
     }
-    return `${BACKEND_ORIGIN}/static/temp${src}`
+    return `${BACKEND_ORIGIN}${sourceRoot}${src}`
   }
 
-  const sourceRel = normalizeRelativePath(sourceMarkdownPath || '')
-  const sourceDir = sourceRel.includes('/') ? sourceRel.slice(0, sourceRel.lastIndexOf('/') + 1) : ''
-
   if (src.startsWith('static/')) {
+    return `${BACKEND_ORIGIN}/${src}`
+  }
+  if (src.startsWith('media/')) {
     return `${BACKEND_ORIGIN}/${src}`
   }
   if (src.startsWith('temp/')) {
@@ -92,9 +100,9 @@ function resolveMarkdownImageSrc(rawSrc: string, sourceMarkdownPath: string): st
   }
 
   try {
-    return new URL(src, `${BACKEND_ORIGIN}/static/temp/${sourceDir}`).toString()
+    return new URL(src, `${BACKEND_ORIGIN}${sourceRoot}/${sourceDir}`).toString()
   } catch {
-    return `${BACKEND_ORIGIN}/static/temp/${sourceDir}${src}`
+    return `${BACKEND_ORIGIN}${sourceRoot}/${sourceDir}${src}`
   }
 }
 

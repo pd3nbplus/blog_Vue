@@ -21,6 +21,7 @@ export function resolveTempAsset(path?: string | null): string {
   const normalized = normalizeRelativePath(path)
   if (!normalized) return ''
   if (normalized.startsWith('static/')) return `${BACKEND_ORIGIN}/${normalized}`
+  if (normalized.startsWith('media/')) return `${BACKEND_ORIGIN}/${normalized}`
   if (normalized.startsWith('temp/')) return `${BACKEND_ORIGIN}/static/${normalized}`
   return `${BACKEND_ORIGIN}/static/temp/${normalized}`
 }
