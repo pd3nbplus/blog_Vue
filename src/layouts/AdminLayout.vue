@@ -87,6 +87,7 @@ function handleThemeChange(event: Event) {
   font-family: var(--font-main);
   --admin-sidebar-width: clamp(12.5rem, 17vw, 16.5rem);
   --admin-topbar-height: clamp(3.25rem, 4vw, 3.9rem);
+  --admin-sidebar-nav-offset: clamp(4.8rem, 9.5vh, 6.8rem);
 }
 
 .sidebar {
@@ -102,7 +103,7 @@ function handleThemeChange(event: Event) {
   top: 0;
   height: 100vh;
   overflow-y: auto;
-  padding-top: 0;
+  padding: var(--admin-sidebar-nav-offset) clamp(0.35rem, 0.9vw, 0.55rem) 0;
 }
 
 .sidebar a {
@@ -226,7 +227,7 @@ function handleThemeChange(event: Event) {
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
-    padding-top: 0;
+    padding: 0;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
