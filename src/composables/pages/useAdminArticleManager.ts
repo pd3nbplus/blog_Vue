@@ -307,6 +307,7 @@ export function useAdminArticleManager() {
     loading,
     submitting,
     editorLoading,
+    categories,
     list,
     total,
     page,

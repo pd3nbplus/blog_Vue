@@ -12,8 +12,7 @@ import {
   uploadAdminArticleCover,
   uploadAdminArticleMarkdown,
 } from '@/services/adminArticle'
-import type { AdminArticlePayload } from '@/types/article'
-import type { CategoryOption } from '@/utils/article'
+import type { AdminArticlePayload, CategoryItem } from '@/types/article'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
 import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
@@ -40,7 +39,7 @@ const props = withDefaults(
   defineProps<{
     loading?: boolean
     submitting: boolean
-    categoryOptions: CategoryOption[]
+    categoryTree: CategoryItem[]
     initialValue?: Partial<AdminArticlePayload> | null
     editing: boolean
   }>(),
@@ -123,6 +122,62 @@ const previewScrollRef = ref<HTMLElement | null>(null)
 let editorTextareaEl: HTMLTextAreaElement | null = null
 let scrollingSyncLocked = false
 const loadedScripts = new Set<string>()
+const expandedParentCategoryId = ref<number | null>(null)
+
+interface CategoryTreeSelectNode {
+  title: string
+  value: number
+  key: number
+  selectable: boolean
+  isTopLevel: boolean
+  children?: CategoryTreeSelectNode[]
+}
+
+const categoryTreeData = computed<CategoryTreeSelectNode[]>(() => {
+  const mapNodes = (nodes: CategoryItem[], isTopLevel: boolean): CategoryTreeSelectNode[] =>
+    nodes.map((node) => {
+      const children = node.children?.length ? mapNodes(node.children, false) : undefined
+      const hasChildren = Boolean(children && children.length)
+      return {
+        title: node.name,
+        value: node.id,
+        key: node.id,
+        selectable: !hasChildren,
+        isTopLevel,
+        ...(children ? { children } : {}),
+      }
+    })
+  return mapNodes(props.categoryTree || [], true)
+})
+
+const categoryExpandedKeys = computed<number[]>(() => {
+  if (!expandedParentCategoryId.value) return []
+  return [expandedParentCategoryId.value]
+})
+
+function handleCategoryDropdownVisibleChange(open: boolean): void {
+  if (open) {
+    expandedParentCategoryId.value = null
+  }
+}
+
+function handleCategoryTreeExpand(
+  _expandedKeys: Array<string | number>,
+  info: {
+    expanded: boolean
+    node?: { value?: string | number; key?: string | number; isTopLevel?: boolean; dataRef?: { isTopLevel?: boolean } }
+  },
+): void {
+  const node = info.node
+  if (!node) return
+  const isTopLevel = Boolean(node.isTopLevel ?? node.dataRef?.isTopLevel)
+  if (!isTopLevel) return
+
+  const nodeKey = Number(node.value ?? node.key)
+  if (!Number.isFinite(nodeKey) || nodeKey <= 0) return
+
+  expandedParentCategoryId.value = info.expanded ? nodeKey : null
+}
 
 watch(
   () => props.initialValue,
@@ -639,7 +694,17 @@ async function handleUploadAndSubmit() {
             <a-select v-model:value="formState.status" :options="statusOptions" />
           </a-form-item>
           <a-form-item label="分类">
-            <a-select v-model:value="formState.category" allow-clear :options="categoryOptions" placeholder="选择分类" />
+            <a-tree-select
+              v-model:value="formState.category"
+              allow-clear
+              :tree-data="categoryTreeData"
+              :tree-expanded-keys="categoryExpandedKeys"
+              :show-search="false"
+              tree-expand-action="click"
+              placeholder="先点击一级分类，再选择二级分类"
+              @dropdownVisibleChange="handleCategoryDropdownVisibleChange"
+              @treeExpand="handleCategoryTreeExpand"
+            />
           </a-form-item>
         </div>
 

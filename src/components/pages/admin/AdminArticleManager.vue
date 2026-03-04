@@ -13,6 +13,7 @@ const {
   loading,
   submitting,
   editorLoading,
+  categories,
   list,
   total,
   page,
@@ -157,6 +158,7 @@ function handleTableChange(
       :editing="Boolean(editingId)"
       :submitting="submitting"
       :category-options="categoryOptions"
+      :category-tree="categories"
       :initial-value="editingFormValue"
       @submit="handleSubmit"
       @cancel="handleCancelEditor"
