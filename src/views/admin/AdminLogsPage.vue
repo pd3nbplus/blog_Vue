@@ -14,7 +14,7 @@ const loading = ref(false)
 const logs = ref<AdminLogItem[]>([])
 const total = ref(0)
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(50)
 const levelCounts = ref<Record<AdminLogLevel, number>>({
   DEBUG: 0,
   INFO: 0,
@@ -48,7 +48,7 @@ const pagination = computed(() => ({
   total: total.value,
   pageSize: pageSize.value,
   showSizeChanger: true,
-  pageSizeOptions: ['10', '20', '50', '100'],
+  pageSizeOptions: ['20', '50', '100', '200'],
   showTotal: (num: number) => `共 ${num} 条`,
 }))
 
@@ -115,7 +115,7 @@ function handleReset() {
 
 function handleTableChange(next: { current?: number; pageSize?: number }) {
   page.value = next.current || 1
-  pageSize.value = next.pageSize || 20
+  pageSize.value = next.pageSize || 50
   void loadLogs(page.value)
 }
 
@@ -256,9 +256,10 @@ onMounted(() => {
 }
 
 .location-code {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   word-break: break-all;
+  line-height: 1.5;
 }
 
 .message-pre {
