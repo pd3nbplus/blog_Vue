@@ -290,9 +290,14 @@ function resetLocalImageDialog() {
 }
 
 const handleMarkdownBeforeUpload: UploadProps['beforeUpload'] = (file) => {
+  if (markdownFileUploading.value) {
+    message.warning('Markdown 正在解析中，请稍候')
+    return false
+  }
   const selected = file as File
   selectedMarkdownFile.value = selected
   markdownUploadList.value = [{ uid: selected.name, name: selected.name, status: 'done' }]
+  void handleMarkdownFileUpload(selected)
   return false
 }
 
@@ -302,8 +307,13 @@ const handleMarkdownRemove: UploadProps['onRemove'] = () => {
   return true
 }
 
-async function handleMarkdownFileUpload() {
-  const file = selectedMarkdownFile.value
+function extractMarkdownBaseName(filename: string): string {
+  const normalized = filename.split('/').pop()?.split('\\').pop() || filename
+  return normalized.replace(/\.[^./\\]+$/, '').trim()
+}
+
+async function handleMarkdownFileUpload(fileOverride?: File | null) {
+  const file = fileOverride ?? selectedMarkdownFile.value
   if (!file) {
     message.warning('请先选择 Markdown 文件')
     return
@@ -316,7 +326,13 @@ async function handleMarkdownFileUpload() {
     })
     formState.markdown_content = data.markdown_content
     formState.source_markdown_path = data.source_markdown_path
-    message.success('Markdown 文件已上传并同步到表单')
+    if (!formState.title.trim()) {
+      const inferredTitle = extractMarkdownBaseName(file.name)
+      if (inferredTitle) {
+        formState.title = inferredTitle
+      }
+    }
+    message.success('Markdown 文件已解析并同步到表单')
   } catch {
     message.error('Markdown 文件上传失败')
   } finally {
@@ -752,14 +768,11 @@ async function handleUploadAndSubmit() {
                   accept=".md,.markdown,.txt,.html,.htm"
                   @remove="handleMarkdownRemove"
                 >
-                  <a-button size="small">
+                  <a-button size="small" :loading="markdownFileUploading">
                     <UploadOutlined />
                     选择 Markdown
                   </a-button>
                 </a-upload>
-                <a-button type="default" size="small" :loading="markdownFileUploading" @click="handleMarkdownFileUpload">
-                  上传并解析 Markdown
-                </a-button>
               </div>
               <a-textarea
                 ref="markdownTextareaRef"
