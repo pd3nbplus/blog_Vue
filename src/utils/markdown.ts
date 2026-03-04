@@ -49,6 +49,66 @@ function normalizeTocMarkers(markdownContent: string): string {
   return parts.join('')
 }
 
+function normalizeBlockMathMarkers(content: string): string {
+  const lines = content.split('\n')
+  const normalized: string[] = []
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const current = lines[i] || ''
+    if (current.trim() !== '$$') {
+      normalized.push(current)
+      continue
+    }
+
+    let closingIndex = -1
+    for (let j = i + 1; j < lines.length; j += 1) {
+      if ((lines[j] || '').trim() === '$$') {
+        closingIndex = j
+        break
+      }
+    }
+
+    if (closingIndex === -1) {
+      normalized.push(current)
+      continue
+    }
+
+    const blockContent = lines
+      .slice(i + 1, closingIndex)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    normalized.push(`$$${blockContent}$$`)
+    i = closingIndex
+  }
+
+  return normalized.join('\n')
+}
+
+function normalizeMathBlocksOutsideCode(markdownContent: string): string {
+  const content = markdownContent || ''
+  const parts: string[] = []
+  let cursor = 0
+
+  for (const match of content.matchAll(FENCED_CODE_BLOCK_PATTERN)) {
+    const start = match.index || 0
+    const matched = match[0] || ''
+    const end = start + matched.length
+
+    if (start > cursor) {
+      parts.push(normalizeBlockMathMarkers(content.slice(cursor, start)))
+    }
+    parts.push(matched)
+    cursor = end
+  }
+
+  if (cursor < content.length) {
+    parts.push(normalizeBlockMathMarkers(content.slice(cursor)))
+  }
+
+  return parts.join('')
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -192,7 +252,8 @@ function sanitize(html: string): string {
 }
 
 export function renderMarkdownContent(markdownContent: string): { html: string; tocHtml: string } {
-  const normalized = normalizeTocMarkers(markdownContent || '')
+  const normalizedToc = normalizeTocMarkers(markdownContent || '')
+  const normalized = normalizeMathBlocksOutsideCode(normalizedToc)
   const tokens = md.parse(normalized, {})
   const headings = collectHeadings(tokens)
   const tocHtmlRaw = buildTocHtml(headings)

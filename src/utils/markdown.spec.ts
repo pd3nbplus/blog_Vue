@@ -23,4 +23,18 @@ describe('renderMarkdownContent', () => {
     const result = renderMarkdownContent(content)
     expect(result.html).toContain('[toc]')
   })
+
+  it('should normalize multiline $$ block math for downstream renderer', () => {
+    const content = '$$\ny = \\\\beta_0 + \\\\beta_1x_1\n$$'
+    const result = renderMarkdownContent(content)
+    expect(result.html).not.toContain('$$<br>')
+    expect(result.html).toContain('$$y = \\beta_0 + \\beta_1x_1$$')
+  })
+
+  it('should not normalize $$ marker inside fenced code block', () => {
+    const content = '```text\n$$\ny = x\n$$\n```'
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('$$')
+    expect(result.html).toContain('<pre><code')
+  })
 })
