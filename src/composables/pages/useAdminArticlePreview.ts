@@ -6,7 +6,13 @@ import { renderMarkdownContent } from '@/utils/markdown'
 
 type RenderMathFn = (
   element: HTMLElement,
-  options: { delimiters: Array<{ left: string; right: string; display: boolean }> },
+  options: {
+    delimiters: Array<{ left: string; right: string; display: boolean }>
+    throwOnError?: boolean
+    strict?: 'ignore' | 'warn' | 'error'
+    errorColor?: string
+    trust?: boolean
+  },
 ) => void
 
 interface UseAdminArticlePreviewOptions {
@@ -95,14 +101,21 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
       p.innerHTML = p.innerHTML.replace(/\\\s*\n/g, '\\\\')
     })
 
-    win.renderMathInElement?.(container, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '$', right: '$', display: false },
-        { left: '\\[', right: '\\]', display: true },
-        { left: '\\(', right: '\\)', display: false },
-      ],
-    })
+    try {
+      win.renderMathInElement?.(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+        throwOnError: false,
+        strict: 'ignore',
+        errorColor: '#cc0000',
+      })
+    } catch {
+      // Keep preview usable even if a malformed formula appears in markdown.
+    }
   }
 
   function resolveEditorTextareaElement(): HTMLTextAreaElement | null {

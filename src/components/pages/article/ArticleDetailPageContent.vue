@@ -8,7 +8,13 @@ import { renderMarkdownContent } from '@/utils/markdown'
 
 type RenderMathFn = (
   element: HTMLElement,
-  options: { delimiters: Array<{ left: string; right: string; display: boolean }> },
+  options: {
+    delimiters: Array<{ left: string; right: string; display: boolean }>
+    throwOnError?: boolean
+    strict?: 'ignore' | 'warn' | 'error'
+    errorColor?: string
+    trust?: boolean
+  },
 ) => void
 
 const { detail, loading } = useArticleDetailPage()
@@ -16,6 +22,7 @@ const showBackToTop = ref(false)
 const loadedScripts = new Set<string>()
 const renderedHtml = ref('')
 const tocHtml = ref('')
+const markdownContainerRef = ref<HTMLElement | null>(null)
 const HTML_IMAGE_SRC_PATTERN = /(<img\b[^>]*?\bsrc=["'])([^"']+)(["'][^>]*>)/gi
 
 function formatDateTime(input?: string | null, mode: 'datetime' | 'date' = 'datetime'): string {
@@ -130,7 +137,7 @@ async function enhanceArticleContent() {
   // Lazy-load legacy renderers used by old page.
   await Promise.all([loadScriptOnce('/js/highlight.min.js'), loadScriptOnce('/js/katex.min.js'), loadScriptOnce('/js/auto-render.min.js')])
 
-  const markdownContainer = document.querySelector('.article-markdown.markdown-body') as HTMLElement | null
+  const markdownContainer = markdownContainerRef.value
   if (!markdownContainer) return
 
   const sourceMarkdownPath = detail.value.source_markdown_path || ''
@@ -200,14 +207,21 @@ async function enhanceArticleContent() {
     p.innerHTML = p.innerHTML.replace(/\\\s*\n/g, '\\\\')
   })
 
-  win.renderMathInElement?.(markdownContainer, {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },
-      { left: '$', right: '$', display: false },
-      { left: '\\[', right: '\\]', display: true },
-      { left: '\\(', right: '\\)', display: false },
-    ],
-  })
+  try {
+    win.renderMathInElement?.(markdownContainer, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      throwOnError: false,
+      strict: 'ignore',
+      errorColor: '#cc0000',
+    })
+  } catch {
+    // Keep article readable even if a malformed formula appears.
+  }
 }
 
 onMounted(() => {
@@ -259,7 +273,7 @@ watch(
         </aside>
 
         <div class="article-main">
-          <article class="markdown-body article-markdown">
+          <article ref="markdownContainerRef" class="markdown-body article-markdown">
             <div v-html="renderedHtml" />
           </article>
         </div>
