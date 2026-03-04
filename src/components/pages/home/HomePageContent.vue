@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
       <AppImage :src="homeHeroSrc" alt="Hero Image" class="hero-image" fallback-src="/img/hero-image.jpg" />
     </div>
 
-    <div class="main-content">
+    <div class="main-content home-main-content">
       <div class="column left-column">
         <div class="personal-intro">
           <div class="profile-image">
@@ -297,6 +297,11 @@ onBeforeUnmount(() => {
 
 <style>
 @import '@/styles/legacy/home.css';
+
+.home-main-content {
+  width: min(100% - clamp(1.25rem, 7vw, 6.5rem), 1720px);
+  margin: 20px auto;
+}
 
 .recommendation-tip {
   color: #666;
@@ -447,5 +452,11 @@ onBeforeUnmount(() => {
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
   color: color-mix(in srgb, var(--accent) 78%, #0d6f66);
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+@media screen and (max-width: 768px) {
+  .home-main-content {
+    width: min(100% - clamp(0.75rem, 4.2vw, 1.25rem), 100%);
+  }
 }
 </style>
