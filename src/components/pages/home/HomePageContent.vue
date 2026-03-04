@@ -68,12 +68,11 @@ function formatDateTime(input?: string | null): string {
 
 function updateActivityLabel(article: ArticleItem): '新发布' | '新更新' {
   const createdAt = article.created_at ? Date.parse(article.created_at) : NaN
-  const updatedAt = article.updated_at ? Date.parse(article.updated_at) : NaN
-  const updateThresholdMs = 60 * 1000
-  if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt)) {
-    return '新发布'
+  const publishedAt = article.published_at ? Date.parse(article.published_at) : NaN
+  if (!Number.isFinite(createdAt) || !Number.isFinite(publishedAt)) {
+    return '新更新'
   }
-  return updatedAt - createdAt > updateThresholdMs ? '新更新' : '新发布'
+  return createdAt === publishedAt ? '新发布' : '新更新'
 }
 
 function formatCount(value?: number | null): string {
