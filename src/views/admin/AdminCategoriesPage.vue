@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
 import { createAdminCategory, deleteAdminCategory, getAdminCategoryTree, updateAdminCategory } from '@/services/admin'
@@ -27,10 +28,6 @@ const modal = reactive({
 })
 
 const iconFile = ref<File | null>(null)
-
-const addActionIcon = '/img/分组.png'
-const editActionIcon = '/img/pen.png'
-const deleteActionIcon = '/img/logout-icon.png'
 
 const categoryMap = computed(() => {
   const map = new Map<number, CategoryItem>()
@@ -202,7 +199,7 @@ onMounted(() => {
         <p>默认全部折叠，仅支持二级分类结构</p>
       </div>
       <button class="btn btn-primary create-parent-btn" @click="openModal('create_parent')">
-        <img :src="addActionIcon" alt="add" class="action-icon" />
+        <PlusOutlined class="action-icon" />
         新建父分类
       </button>
     </div>
@@ -233,14 +230,20 @@ onMounted(() => {
         </div>
 
         <div class="row-actions">
-          <button v-if="row.depth === 0" class="icon-btn" type="button" title="新增子分类" @click="openModal('create', row.item.id)">
-            <img :src="addActionIcon" alt="新增" class="action-icon" />
+          <button
+            v-if="row.depth === 0"
+            class="icon-btn create"
+            type="button"
+            title="新增子分类"
+            @click="openModal('create', row.item.id)"
+          >
+            <PlusOutlined class="action-icon" />
           </button>
-          <button class="icon-btn" type="button" title="编辑分类" @click="openModal('edit', row.item.id)">
-            <img :src="editActionIcon" alt="编辑" class="action-icon" />
+          <button class="icon-btn edit" type="button" title="编辑分类" @click="openModal('edit', row.item.id)">
+            <EditOutlined class="action-icon" />
           </button>
           <button class="icon-btn danger" type="button" title="删除分类" @click="handleDelete(row.item.id)">
-            <img :src="deleteActionIcon" alt="删除" class="action-icon" />
+            <DeleteOutlined class="action-icon" />
           </button>
         </div>
       </div>
@@ -394,12 +397,21 @@ onMounted(() => {
   background: color-mix(in srgb, var(--surface-2) 75%, transparent);
 }
 
-.icon-btn.danger {
-  border-color: color-mix(in srgb, #e03131 45%, var(--border));
+.icon-btn.create {
+  color: var(--primary);
 }
 
-.icon-btn.danger .action-icon {
-  filter: hue-rotate(330deg) saturate(1.2);
+.icon-btn.edit {
+  color: color-mix(in srgb, var(--text) 76%, var(--primary) 24%);
+}
+
+.icon-btn.danger {
+  border-color: color-mix(in srgb, #e03131 45%, var(--border));
+  color: var(--btn-danger);
+}
+
+.icon-btn:hover .action-icon {
+  transform: scale(1.05);
 }
 
 .category-icon {
@@ -409,9 +421,12 @@ onMounted(() => {
 }
 
 .action-icon {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+
+.create-parent-btn .action-icon {
+  color: var(--btn-text-on-primary);
 }
 
 .empty-tip {
