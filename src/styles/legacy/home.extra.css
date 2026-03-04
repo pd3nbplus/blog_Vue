@@ -1,0 +1,223 @@
+.category-item > a.active {
+    color: #007BFF; /* Change color on active */
+    background-color: #f0f0f0; /* Light background on active */
+    border-left-color: #007BFF;
+}
+
+.subcategory-list {
+    margin: 0.2rem 0.55rem 0.5rem 1.15rem;
+    padding: 0.35rem 0.45rem 0.35rem 0.75rem; /* Indent subcategory list */
+    background-color: #f9f9f9; /* Light background for subcategory list */
+    border-radius: 8px; /* Rounded corners for the bottom of the list */
+    position: relative;
+}
+
+.subcategory-list::before {
+    content: '';
+    position: absolute;
+    left: 0.42rem;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    border-left: 2px dashed #d7d7d7;
+    pointer-events: none;
+}
+
+.subcategory-list li {
+    border-bottom: 1px solid #eee; /* Separator line between subcategory items */
+}
+
+.subcategory-list li:last-child {
+    border-bottom: none; /* Remove bottom border for the last item */
+}
+
+.subcategory-list li a {
+    text-decoration: none;
+    color: #555;
+    font-size: 0.94rem;
+    font-weight: 500;
+    display: block;
+    padding: 0.45rem 0.55rem 0.45rem 1.05rem; /* Spacing around subcategory items */
+    border-radius: 6px;
+    transition: color 0.25s, background-color 0.25s; /* Smooth color transition */
+}
+
+.subcategory-list li .arrowhead-span {
+    opacity: 0.4;
+    width: 0.72rem;
+    display: inline-block;
+    text-align: center;
+    font-size: 0.76em;
+}
+
+.subcategory-list li a:hover {
+    color: #444; /* Change color on hover */
+    background-color: #f0f0f0; /* Light background on hover */
+}
+
+/* Styles for the latest updates section */
+.latest-updates ul {
+    list-style: none; /* Remove default list style */
+    padding: 0;
+    margin: 0;
+}
+
+.latest-updates li {
+    white-space: nowrap; /* Prevent line break */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Show ellipsis when text overflows */
+    padding: 5px 0; /* Add some padding for better spacing */
+}
+
+.latest-updates .update-title {
+    text-decoration: none; /* Remove underline from links */
+    color: inherit; /* Use the inherited color */
+    font-weight: bold; /* Make the title bold */
+}
+
+.latest-updates .update-title:hover {
+    color: #007BFF; /* Change color on hover */
+}
+
+.category-icon {
+    width: clamp(0.8rem, 1.2vw, 1rem);
+    height: clamp(0.8rem, 1.2vw, 1rem);
+    margin-right: 2px;
+    vertical-align: middle;
+}
+
+/* Hide hero section on mobile devices */
+@media screen and (max-width: 768px) {
+    .hero {
+        display: none;
+    }
+
+    .main-content {
+        flex-direction: column;
+    }
+
+    .main-content > .column {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .column.left-column,
+    .column.middle-column,
+    .column.right-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .article {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 1rem;
+    }
+
+    .article-main-img {
+        width: 100%;
+        order: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .article-details {
+        width: 100%;
+        order: 2;
+    }
+
+    .article h2 {
+        margin-top: 0;
+        order: 2;
+    }
+
+    .footer-info {
+        margin-top: 0.5rem;
+    }
+
+    .popular-articles .article .article-details p {
+        display: none; /* 隐藏摘要部分 */
+    }
+
+    .categories-title {
+        display: none;
+    }
+
+    .personal-intro {
+        margin-bottom: 1rem;
+    }
+
+    .latest-articles,
+    .latest-updates {
+        margin-top: 10px;
+    }
+
+    .popular-articles {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Theme skin overrides (visual only; no layout changes) */
+.personal-intro,
+.latest-articles,
+.latest-updates,
+.categories .categories-title,
+.categories ul,
+.popular-articles li {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.personal-intro {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 88%, transparent), var(--surface));
+}
+
+.article-details h2,
+.categories h2,
+.category-item > a {
+    color: var(--text);
+}
+
+.subcategory-list li a {
+    color: var(--muted);
+}
+
+.article-meta,
+.article-details p,
+.tag,
+.latest-updates li,
+.article-details .footer-info,
+.personal-intro .stats span:first-child {
+    color: var(--muted);
+}
+
+.tag,
+.categories ul,
+.subcategory-list {
+    background: var(--surface-2);
+    border-color: var(--border);
+}
+
+.personal-intro .stats span:last-child,
+.personal-intro h2 {
+    color: var(--text);
+}
+
+.category-item a:hover,
+.category-item a.active,
+.subcategory-list li a:hover,
+.latest-updates .update-title:hover,
+.popular-articles li:hover h2,
+.latest-articles li:hover .article-details h2 {
+    background-color: var(--surface-2);
+}
+
+.category-item > a:hover,
+.category-item > a.active {
+    color: var(--primary);
+    border-left-color: var(--primary);
+}
+
+.subcategory-list li a:hover {
+    color: var(--text);
+}
