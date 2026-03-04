@@ -625,7 +625,12 @@ async function handleUploadAndSubmit() {
                   上传并解析 Markdown
                 </a-button>
               </div>
-              <a-textarea ref="markdownTextareaRef" v-model:value="formState.markdown_content" class="markdown-textarea" />
+              <a-textarea
+                ref="markdownTextareaRef"
+                v-model:value="formState.markdown_content"
+                class="markdown-textarea"
+                :auto-size="false"
+              />
               <div v-if="detectedLocalRefs.length" class="local-image-tip">
                 检测到 {{ detectedLocalRefs.length }} 处本地图片引用，提交时将提示上传并自动处理引用路径。
               </div>
@@ -784,23 +789,35 @@ async function handleUploadAndSubmit() {
 
 .preview-scroll {
   height: var(--editor-pane-height);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--surface) 88%, white 12%);
+  background: var(--surface);
   border: 1px solid var(--border);
   padding: 14px;
 }
 
 .preview-markdown {
   min-height: 100%;
+  margin: 0;
+  background: transparent;
+  color: var(--text);
 }
 
+.markdown-textarea,
 .markdown-textarea :deep(textarea) {
   min-height: var(--editor-pane-height);
   max-height: var(--editor-pane-height);
   height: var(--editor-pane-height);
   resize: none;
-  overflow: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.preview-markdown :deep(pre),
+.preview-markdown :deep(code) {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .preview-markdown :deep(img) {
