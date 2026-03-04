@@ -5,7 +5,7 @@ import AppImage from '@/components/common/AppImage.vue'
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
 import { useFeedback } from '@/composables/useFeedback'
 import { useHomePage } from '@/composables/pages/useHomePage'
-import { getHomeRecommendations } from '@/services/api/article'
+import { getArticleList, getHomeRecommendations } from '@/services/api/article'
 import type { ArticleItem, CategoryItem, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 
@@ -18,22 +18,24 @@ const recommendationPage = ref(1)
 const recommendationSeed = ref<number | undefined>(undefined)
 const recommendationHasMore = ref(true)
 const recommendationLoading = ref(false)
+const latestUpdates = ref<ArticleItem[]>([])
 const latestArticlesCount = 10
+const latestUpdatesCount = 5
+const latestUpdatesPageSize = 100
 const recommendationInitialPageSize = 12
 const recommendationScrollPageSize = 8
 const recommendationScrollThreshold = 180
 
-const latestArticles = computed(() => (homeSummary.value?.latest_articles || []).slice(0, latestArticlesCount))
-const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.pinned_collections || []).slice(0, 3))
-const latestUpdates = computed(() =>
+const latestArticles = computed(() =>
   [...(homeSummary.value?.latest_articles || [])]
     .sort((a, b) => {
-      const aTimestamp = a.published_at ? Date.parse(a.published_at) : Number.NEGATIVE_INFINITY
-      const bTimestamp = b.published_at ? Date.parse(b.published_at) : Number.NEGATIVE_INFINITY
+      const aTimestamp = a.created_at ? Date.parse(a.created_at) : Number.NEGATIVE_INFINITY
+      const bTimestamp = b.created_at ? Date.parse(b.created_at) : Number.NEGATIVE_INFINITY
       return bTimestamp - aTimestamp
     })
-    .slice(0, 5),
+    .slice(0, latestArticlesCount),
 )
+const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.pinned_collections || []).slice(0, 3))
 const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
@@ -142,12 +144,57 @@ async function loadRecommendations(reset = false): Promise<void> {
   }
 }
 
+function byPublishedAtDesc(a: ArticleItem, b: ArticleItem): number {
+  const aTimestamp = a.published_at ? Date.parse(a.published_at) : Number.NEGATIVE_INFINITY
+  const bTimestamp = b.published_at ? Date.parse(b.published_at) : Number.NEGATIVE_INFINITY
+  return bTimestamp - aTimestamp
+}
+
+async function loadLatestUpdates(): Promise<void> {
+  const pinnedArticles: ArticleItem[] = []
+  const nonPinnedArticles: ArticleItem[] = []
+  let page = 1
+  let numPages = 1
+
+  try {
+    while (page <= numPages) {
+      const response = await getArticleList({
+        page,
+        page_size: latestUpdatesPageSize,
+      })
+      const pageData = response.data
+      numPages = pageData.num_pages || 1
+
+      for (const article of pageData.results) {
+        if (article.is_pinned) {
+          pinnedArticles.push(article)
+          continue
+        }
+        if (nonPinnedArticles.length < latestUpdatesCount) {
+          nonPinnedArticles.push(article)
+        }
+      }
+
+      if (nonPinnedArticles.length >= latestUpdatesCount) {
+        break
+      }
+      page += 1
+    }
+
+    latestUpdates.value = [...pinnedArticles, ...nonPinnedArticles].sort(byPublishedAtDesc).slice(0, latestUpdatesCount)
+  } catch (error) {
+    latestUpdates.value = []
+    feedback.error(error, '加载最新动态失败')
+  }
+}
+
 function handleScroll(): void {
   if (!isNearBottom()) return
   void loadRecommendations(false)
 }
 
 onMounted(() => {
+  void loadLatestUpdates()
   void loadRecommendations(true)
   window.addEventListener('scroll', handleScroll, { passive: true })
 })
