@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, DownCircleOutlined, EditOutlined, PlusOutlined, RightCircleOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import type { UploadProps } from 'ant-design-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
@@ -227,7 +227,8 @@ onMounted(() => {
             :aria-label="isExpanded(row.item.id) ? '收起节点' : '展开节点'"
             @click="toggleCategory(row.item.id)"
           >
-            <span class="toggle-arrow" :class="{ expanded: isExpanded(row.item.id) }">▸</span>
+            <DownCircleOutlined v-if="isExpanded(row.item.id)" class="toggle-arrow expanded" />
+            <RightCircleOutlined v-else class="toggle-arrow" />
           </button>
           <span v-else class="toggle-placeholder" aria-hidden="true" />
 
@@ -383,12 +384,11 @@ onMounted(() => {
 }
 
 .toggle-arrow {
-  font-size: 0.84rem;
-  transition: transform 0.2s ease;
+  font-size: 0.96rem;
 }
 
 .toggle-arrow.expanded {
-  transform: rotate(90deg);
+  transform: none;
 }
 
 .toggle-placeholder {
