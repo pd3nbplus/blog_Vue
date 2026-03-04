@@ -25,7 +25,15 @@ const recommendationScrollThreshold = 180
 
 const latestArticles = computed(() => (homeSummary.value?.latest_articles || []).slice(0, latestArticlesCount))
 const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.pinned_collections || []).slice(0, 3))
-const latestUpdates = computed(() => (homeSummary.value?.latest_articles || []).slice(0, 5))
+const latestUpdates = computed(() =>
+  [...(homeSummary.value?.latest_articles || [])]
+    .sort((a, b) => {
+      const aTimestamp = a.published_at ? Date.parse(a.published_at) : Number.NEGATIVE_INFINITY
+      const bTimestamp = b.published_at ? Date.parse(b.published_at) : Number.NEGATIVE_INFINITY
+      return bTimestamp - aTimestamp
+    })
+    .slice(0, 5),
+)
 const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
