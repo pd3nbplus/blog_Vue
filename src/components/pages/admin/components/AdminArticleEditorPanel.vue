@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { FormInstance } from 'ant-design-vue'
@@ -113,6 +113,10 @@ const markdownUploadList = ref<Array<{ uid: string; name: string; status: 'done'
 const coverUploading = ref(false)
 const selectedCoverFile = ref<File | null>(null)
 const coverUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>([])
+const markdownTextareaRef = ref<unknown>(null)
+const previewScrollRef = ref<HTMLElement | null>(null)
+let editorTextareaEl: HTMLTextAreaElement | null = null
+let scrollingSyncLocked = false
 
 watch(
   () => props.initialValue,
@@ -352,10 +356,87 @@ const previewHtml = computed(() => {
 
 const previewContainerRef = ref<HTMLElement | null>(null)
 
+function resolveEditorTextareaElement(): HTMLTextAreaElement | null {
+  const instance = markdownTextareaRef.value as
+    | {
+        resizableTextArea?: { textArea?: HTMLTextAreaElement | null }
+        $el?: HTMLElement
+      }
+    | null
+  if (!instance) return null
+  if (instance.resizableTextArea?.textArea) {
+    return instance.resizableTextArea.textArea
+  }
+  return instance.$el?.querySelector('textarea') || null
+}
+
+function bindEditorScrollListener() {
+  const nextTextarea = resolveEditorTextareaElement()
+  if (editorTextareaEl === nextTextarea) return
+  if (editorTextareaEl) {
+    editorTextareaEl.removeEventListener('scroll', handleEditorScroll)
+  }
+  editorTextareaEl = nextTextarea
+  if (editorTextareaEl) {
+    editorTextareaEl.addEventListener('scroll', handleEditorScroll, { passive: true })
+  }
+}
+
+function syncScrollPosition(source: HTMLElement, target: HTMLElement) {
+  const sourceMax = source.scrollHeight - source.clientHeight
+  const targetMax = target.scrollHeight - target.clientHeight
+  if (sourceMax <= 0 || targetMax <= 0) {
+    target.scrollTop = 0
+    return
+  }
+  const ratio = source.scrollTop / sourceMax
+  target.scrollTop = ratio * targetMax
+}
+
+function runScrollSync(task: () => void) {
+  if (scrollingSyncLocked) return
+  scrollingSyncLocked = true
+  task()
+  requestAnimationFrame(() => {
+    scrollingSyncLocked = false
+  })
+}
+
+function handleEditorScroll() {
+  const source = editorTextareaEl
+  const target = previewScrollRef.value
+  if (!source || !target) return
+  runScrollSync(() => {
+    syncScrollPosition(source, target)
+  })
+}
+
+function handlePreviewScroll() {
+  const source = previewScrollRef.value
+  const target = editorTextareaEl
+  if (!source || !target) return
+  runScrollSync(() => {
+    syncScrollPosition(source, target)
+  })
+}
+
+onMounted(async () => {
+  await nextTick()
+  bindEditorScrollListener()
+})
+
+onBeforeUnmount(() => {
+  if (editorTextareaEl) {
+    editorTextareaEl.removeEventListener('scroll', handleEditorScroll)
+  }
+  editorTextareaEl = null
+})
+
 watch(
   previewHtml,
   async () => {
     await nextTick()
+    bindEditorScrollListener()
     const container = previewContainerRef.value
     if (!container) return
     container.querySelectorAll('img').forEach((img) => {
@@ -544,7 +625,7 @@ async function handleUploadAndSubmit() {
                   上传并解析 Markdown
                 </a-button>
               </div>
-              <a-textarea v-model:value="formState.markdown_content" :auto-size="{ minRows: 22, maxRows: 42 }" />
+              <a-textarea ref="markdownTextareaRef" v-model:value="formState.markdown_content" class="markdown-textarea" />
               <div v-if="detectedLocalRefs.length" class="local-image-tip">
                 检测到 {{ detectedLocalRefs.length }} 处本地图片引用，提交时将提示上传并自动处理引用路径。
               </div>
@@ -553,8 +634,10 @@ async function handleUploadAndSubmit() {
 
           <section class="editor-column preview-column">
             <h3 class="preview-title">实时预览</h3>
-            <div v-if="!formState.markdown_content.trim()" class="preview-empty">在左侧输入 Markdown 后，这里会实时渲染结果。</div>
-            <article v-else ref="previewContainerRef" class="preview-markdown markdown-body" v-html="previewHtml" />
+            <div ref="previewScrollRef" class="preview-scroll" @scroll.passive="handlePreviewScroll">
+              <div v-if="!formState.markdown_content.trim()" class="preview-empty">在左侧输入 Markdown 后，这里会实时渲染结果。</div>
+              <article v-else ref="previewContainerRef" class="preview-markdown markdown-body" v-html="previewHtml" />
+            </div>
           </section>
         </div>
       </a-form>
@@ -623,6 +706,7 @@ async function handleUploadAndSubmit() {
 @import '/css/github-markdown.min.css';
 
 .editor-page {
+  --editor-pane-height: min(70vh, 46rem);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -693,18 +777,30 @@ async function handleUploadAndSubmit() {
 .preview-empty {
   color: var(--muted);
   font-size: 0.86rem;
-  min-height: 12rem;
+  min-height: 100%;
   display: flex;
   align-items: center;
 }
 
-.preview-markdown {
-  max-height: min(70vh, 46rem);
+.preview-scroll {
+  height: var(--editor-pane-height);
   overflow: auto;
   border-radius: 6px;
   background: color-mix(in srgb, var(--surface) 88%, white 12%);
   border: 1px solid var(--border);
   padding: 14px;
+}
+
+.preview-markdown {
+  min-height: 100%;
+}
+
+.markdown-textarea :deep(textarea) {
+  min-height: var(--editor-pane-height);
+  max-height: var(--editor-pane-height);
+  height: var(--editor-pane-height);
+  resize: none;
+  overflow: auto !important;
 }
 
 .preview-markdown :deep(img) {
