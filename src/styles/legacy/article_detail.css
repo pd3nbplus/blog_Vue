@@ -2,7 +2,7 @@
     --left-rail-width: clamp(15rem, 18vw, 20rem);
     --right-rail-width: 32vmin;
     --rail-gap: clamp(0.7rem, 1.2vw, 1.2rem);
-    --page-gutter: clamp(2.5rem, 7.6vw, 8.5rem);
+    --page-gutter: clamp(3.5rem, 10vw, 12rem);
     width: 100%;
     margin: 0;
     padding: 1rem 0 2rem;
