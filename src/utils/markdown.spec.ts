@@ -37,4 +37,10 @@ describe('renderMarkdownContent', () => {
     expect(result.html).toContain('$$')
     expect(result.html).toContain('<pre><code')
   })
+
+  it('should normalize escaped $$ delimiter outside code blocks', () => {
+    const content = '$$E({\\hat{\\beta_0}}) = \\beta_0\\ E({\\hat{\\beta_1}}) = \\beta_1\\$$'
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('$$E({\\hat{\\beta_0}}) = \\beta_0\\ E({\\hat{\\beta_1}}) = \\beta_1$$')
+  })
 })

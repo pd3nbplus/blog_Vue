@@ -85,6 +85,12 @@ function normalizeBlockMathMarkers(content: string): string {
   return normalized.join('\n')
 }
 
+function normalizeMathDelimiters(content: string): string {
+  if (!content) return content
+  // Legacy imports may escape math block delimiters as \$$, which breaks KaTeX auto-render.
+  return content.replace(/\\\$\$/g, () => '$$')
+}
+
 function normalizeMathBlocksOutsideCode(markdownContent: string): string {
   const content = markdownContent || ''
   const parts: string[] = []
@@ -96,14 +102,16 @@ function normalizeMathBlocksOutsideCode(markdownContent: string): string {
     const end = start + matched.length
 
     if (start > cursor) {
-      parts.push(normalizeBlockMathMarkers(content.slice(cursor, start)))
+      const plain = normalizeMathDelimiters(content.slice(cursor, start))
+      parts.push(normalizeBlockMathMarkers(plain))
     }
     parts.push(matched)
     cursor = end
   }
 
   if (cursor < content.length) {
-    parts.push(normalizeBlockMathMarkers(content.slice(cursor)))
+    const plain = normalizeMathDelimiters(content.slice(cursor))
+    parts.push(normalizeBlockMathMarkers(plain))
   }
 
   return parts.join('')
