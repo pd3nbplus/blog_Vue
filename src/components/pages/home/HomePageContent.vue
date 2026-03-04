@@ -1,0 +1,254 @@
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
+import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
+import { useFeedback } from '@/composables/useFeedback'
+import { useHomePage } from '@/composables/pages/useHomePage'
+import { getHomeRecommendations } from '@/services/article'
+import type { ArticleItem, CategoryItem } from '@/types/article'
+import { resolveTempAsset } from '@/utils/assets'
+
+const { homeSummary, loading } = useHomePage()
+const feedback = useFeedback()
+const openedCategories = ref<number[]>([])
+const isLiked = ref(false)
+const recommendedArticles = ref<ArticleItem[]>([])
+const recommendationPage = ref(1)
+const recommendationSeed = ref<number | undefined>(undefined)
+const recommendationHasMore = ref(true)
+const recommendationLoading = ref(false)
+const latestArticlesCount = 10
+const recommendationInitialPageSize = 12
+const recommendationScrollPageSize = 8
+const recommendationScrollThreshold = 180
+
+const latestArticles = computed(() => (homeSummary.value?.latest_articles || []).slice(0, latestArticlesCount))
+const latestUpdates = computed(() => (homeSummary.value?.latest_articles || []).slice(0, 5))
+
+function isOpened(id: number): boolean {
+  return openedCategories.value.includes(id)
+}
+
+function toggleCategory(id: number): void {
+  if (isOpened(id)) {
+    openedCategories.value = openedCategories.value.filter((item) => item !== id)
+    return
+  }
+  openedCategories.value.push(id)
+}
+
+function toggleLike() {
+  isLiked.value = !isLiked.value
+}
+
+function getCoverSrc(path?: string | null): string {
+  const resolved = resolveTempAsset(path)
+  return resolved || '/img/hero-image.jpg'
+}
+
+function getCategoryIcon(path?: string | null): string {
+  return resolveTempAsset(path)
+}
+
+function formatDate(input?: string | null): string {
+  if (!input) return ''
+  return input.slice(0, 10).replace(/-/g, '/')
+}
+
+function formatDateTime(input?: string | null): string {
+  if (!input) return ''
+  return input.slice(0, 19).replace('T', ' ')
+}
+
+function articleCategory(article: ArticleItem): string {
+  return article.category?.name || '未分类'
+}
+
+function articleCategoryIcon(article: ArticleItem): string {
+  return getCategoryIcon(article.category?.icon_path)
+}
+
+function topCategories(categories: CategoryItem[] = []): CategoryItem[] {
+  return categories.filter((item) => item.level === 1)
+}
+
+function isNearBottom(): boolean {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
+  const pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0
+  return scrollTop + viewportHeight >= pageHeight - recommendationScrollThreshold
+}
+
+async function loadRecommendations(reset = false): Promise<void> {
+  if (recommendationLoading.value) return
+  if (!reset && !recommendationHasMore.value) return
+
+  recommendationLoading.value = true
+  try {
+    const targetPage = reset ? 1 : recommendationPage.value
+    const pageSize = reset ? recommendationInitialPageSize : recommendationScrollPageSize
+    const res = await getHomeRecommendations({
+      page: targetPage,
+      page_size: pageSize,
+      seed: recommendationSeed.value,
+    })
+    const pageData = res.data
+    recommendationSeed.value = pageData.seed
+    recommendationHasMore.value = pageData.has_more
+
+    if (reset) {
+      recommendedArticles.value = pageData.results
+    } else {
+      const exists = new Set(recommendedArticles.value.map((item) => item.id))
+      for (const item of pageData.results) {
+        if (exists.has(item.id)) continue
+        exists.add(item.id)
+        recommendedArticles.value.push(item)
+      }
+    }
+    recommendationPage.value = pageData.page + 1
+  } catch (error) {
+    feedback.error(error, '加载推荐文章失败')
+  } finally {
+    recommendationLoading.value = false
+  }
+}
+
+function handleScroll(): void {
+  if (!isNearBottom()) return
+  void loadRecommendations(false)
+}
+
+onMounted(() => {
+  void loadRecommendations(true)
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+</script>
+
+<template>
+  <a-spin :spinning="loading">
+    <div class="hero">
+      <div class="cover-layer">
+        <div class="motto-content">
+          <h2>想,&nbsp; 都是问题</h2>
+          <h2>&nbsp;</h2>
+          <h1>做,&nbsp; 才有答案</h1>
+          <h2>&nbsp;</h2>
+          <h2>站着不动，永远是观众！</h2>
+        </div>
+      </div>
+      <img src="/img/hero-image.jpg" alt="Hero Image" class="hero-image" />
+    </div>
+
+    <div class="main-content">
+      <div class="column left-column">
+        <div class="personal-intro">
+          <div class="profile-image">
+            <img src="/img/profile-image.png" alt="Profile Image" />
+          </div>
+          <h2>pdnbplus</h2>
+          <div class="stats">
+            <div>
+              <span>文章</span>
+              <span>{{ homeSummary?.stats.article_count ?? 0 }}</span>
+            </div>
+            <div>
+              <span>分类</span>
+              <span>{{ homeSummary?.stats.category_count ?? 0 }}</span>
+            </div>
+          </div>
+          <button class="like-btn" :class="{ liked: isLiked }" @click="toggleLike">
+            点个赞 <span class="heart-icon">♥</span>
+          </button>
+        </div>
+
+        <div class="latest-articles">
+          <h2>Newest Paper Reading Article</h2>
+          <ul>
+            <li v-for="article in latestArticles" :key="article.id">
+              <ArticlePreviewCard
+                :article-id="article.id"
+                :cover-src="getCoverSrc(article.cover_path)"
+                :title="article.title"
+                :footer-info="`${articleCategory(article)} | ${formatDate(article.created_at)} | ${article.read_minutes} 分钟`"
+              />
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="column middle-column">
+        <div class="popular-articles">
+          <h2>随机推荐文章</h2>
+          <ul>
+            <li v-for="article in recommendedArticles" :key="article.id">
+              <ArticlePreviewCard
+                :article-id="article.id"
+                :cover-src="getCoverSrc(article.cover_path)"
+                :title="article.title"
+                :date-text="formatDateTime(article.created_at)"
+                :view-count="article.view_count"
+                :read-minutes="article.read_minutes"
+                :summary="article.summary || '暂无摘要'"
+                :max-summary-length="80"
+                :tag-name="articleCategory(article)"
+                :tag-icon-src="articleCategoryIcon(article)"
+              />
+            </li>
+          </ul>
+          <p v-if="recommendationLoading" class="recommendation-tip">正在加载推荐...</p>
+          <p v-else-if="!recommendationHasMore" class="recommendation-tip">没有更多推荐了</p>
+        </div>
+      </div>
+
+      <div class="column right-column">
+        <div class="latest-updates">
+          <h2>最新动态</h2>
+          <ul>
+            <li v-for="update in latestUpdates" :key="update.id">
+              {{ update.author.username }} 发布了
+              <router-link :to="{ name: 'article-detail', params: { id: update.id } }" class="update-title">
+                {{ update.title }}
+              </router-link>
+            </li>
+          </ul>
+        </div>
+
+        <div class="categories">
+          <div class="categories-title">
+            <h2>文章分类</h2>
+          </div>
+          <ul>
+            <li v-for="category in topCategories(homeSummary?.categories || [])" :key="category.id" class="category-item">
+              <a href="javascript:void(0);" @click.prevent="toggleCategory(category.id)">
+                <span class="arrowhead-span">></span> {{ category.name }}
+              </a>
+              <ul v-show="isOpened(category.id)" class="subcategory-list">
+                <li v-for="subcategory in category.children || []" :key="subcategory.id">
+                  <router-link :to="{ name: 'category', params: { categoryId: subcategory.id } }">
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="arrowhead-span">></span>
+                    {{ subcategory.name }}
+                  </router-link>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </a-spin>
+</template>
+
+<style>
+@import '@/styles/legacy/home.css';
+
+.recommendation-tip {
+  color: #666;
+  text-align: center;
+  margin: 12px 0 6px;
+}
+</style>
