@@ -190,10 +190,13 @@ onBeforeUnmount(() => {
 
       <div class="column middle-column">
         <div v-if="pinnedCollections.length" class="pinned-collections app-surface-card">
-          <h2>置顶合集</h2>
+          <div class="pinned-collections-header">
+            <h2>置顶合集</h2>
+            <span>精选专题</span>
+          </div>
           <ul>
             <li v-for="collection in pinnedCollections" :key="collection.id">
-              <div class="collection-card">
+              <router-link :to="{ name: 'collection', params: { collectionId: collection.id } }" class="collection-card collection-link">
                 <AppImage
                   :src="getCoverSrc(collection.cover_path)"
                   :alt="collection.name"
@@ -201,14 +204,16 @@ onBeforeUnmount(() => {
                   fallback-src="/img/hero-image.jpg"
                 />
                 <div class="collection-main">
+                  <p class="collection-badge">Collection</p>
                   <h3>{{ collection.name }}</h3>
                   <p class="collection-summary">{{ collection.summary || '暂无合集概述' }}</p>
                   <div class="collection-stats">
                     <span>文章 {{ formatCount(collection.article_count) }}</span>
                     <span>浏览 {{ formatCount(collection.total_views) }}</span>
                   </div>
+                  <span class="collection-entry">进入合集 →</span>
                 </div>
-              </div>
+              </router-link>
             </li>
           </ul>
         </div>
@@ -285,14 +290,39 @@ onBeforeUnmount(() => {
 
 .pinned-collections {
   margin-bottom: 12px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, #145ca8 30%, var(--border));
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #145ca8 38%, var(--border));
   padding: 12px;
-  background: color-mix(in srgb, #145ca8 8%, var(--surface));
+  background:
+    radial-gradient(circle at 0% 0%, rgb(20 92 168 / 24%), transparent 54%),
+    radial-gradient(circle at 100% 0%, rgb(16 185 129 / 18%), transparent 52%),
+    linear-gradient(135deg, rgb(255 255 255 / 88%), rgb(245 250 255 / 90%)),
+    var(--surface);
+  box-shadow: 0 14px 32px rgb(17 24 39 / 14%);
+}
+
+.pinned-collections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .pinned-collections h2 {
-  margin: 0 0 10px;
+  margin: 0;
+}
+
+.pinned-collections-header span {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #145ca8 35%, var(--border));
+  background: color-mix(in srgb, #145ca8 14%, var(--surface));
+  color: #145ca8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .pinned-collections ul {
@@ -308,11 +338,27 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #145ca8 24%, var(--border));
+  padding: 10px;
+  background: color-mix(in srgb, var(--surface) 95%, #f0f7ff);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.collection-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, #145ca8 44%, var(--border));
+  box-shadow: 0 10px 22px rgb(20 92 168 / 18%);
 }
 
 .collection-cover {
-  width: 68px;
-  height: 48px;
+  width: 74px;
+  height: 56px;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid var(--border);
@@ -324,9 +370,23 @@ onBeforeUnmount(() => {
 }
 
 .collection-main h3 {
-  margin: 0;
-  font-size: 0.95rem;
+  margin: 6px 0 0;
+  font-size: 0.98rem;
   line-height: 1.35;
+}
+
+.collection-badge {
+  margin: 0;
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #145ca8 30%, var(--border));
+  background: color-mix(in srgb, #145ca8 10%, var(--surface));
+  color: #145ca8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
 }
 
 .collection-summary {
@@ -341,5 +401,13 @@ onBeforeUnmount(() => {
   gap: 8px;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.collection-entry {
+  margin-top: 4px;
+  display: inline-flex;
+  color: #145ca8;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 </style>

@@ -102,6 +102,11 @@ export const routes: RouteRecordRaw[] = [
         name: 'category',
         component: () => import('@/views/article/ArticleListPage.vue'),
       },
+      {
+        path: 'collections/:collectionId(\\d+)/',
+        name: 'collection',
+        component: () => import('@/views/collection/CollectionPage.vue'),
+      },
       { path: 'query/', name: 'query', component: () => import('@/views/article/ArticleListPage.vue') },
       { path: 'about/', name: 'about', component: () => import('@/views/article/AboutPage.vue') },
       { path: 'contact/', name: 'contact', component: () => import('@/views/article/ContactPage.vue') },
