@@ -1,0 +1,87 @@
+
+/* 水平居中 */
+.level-1-category {
+    display: flex;
+    justify-content: center;
+}
+
+.level-1-category .category-row,
+.level-2-category .category-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.level-1-category .category-nav-tag {
+    text-decoration: none;
+    color: var(--primary);
+    background-color: var(--surface-2);
+    border-radius: 5px;
+    font-size: 1.2rem;
+    font-weight: 550;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+    padding: 15px 20px; /* Spacing around each item */
+    transition: color 0.3s, background-color 0.3s; /* Smooth color and background transition */
+    cursor: pointer;
+    user-select: none;
+}
+
+.level-1-category .category-nav-tag:hover,
+.level-1-category .category-nav-tag.active {
+    color: var(--btn-text-on-primary); /* Change color on active */
+    background-color: var(--primary); /* Light background on active */
+    border-radius: 5px; /* Rounded corners on active */
+}
+
+.level-2-category .category-nav-tag {
+    /* 水平居中 */
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+    color: var(--text);
+    font-size: 18px;
+    background-color: var(--surface-2);
+    border-radius: 5px; /* Rounded corners on active */
+    cursor: pointer;
+    user-select: none;
+    padding: 6px 14px;
+}
+
+.level-2-category .category-nav-tag.active,
+.level-2-category .category-nav-tag:hover {
+    color: var(--btn-text-on-primary);
+    background-color: var(--primary);
+    border-radius: 5px; /* Rounded corners on hover */
+}
+
+.level-1-category .category-nav-tag:hover,
+.level-2-category .category-nav-tag:hover {
+    transform: scale(1.1); /* Scale on hover */
+}
+
+.level-1-category .category-nav-tag img,
+.level-2-category .category-nav-tag img {
+    display: inline-block;
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+
+.level-1-category .category-nav-tag .category-icon,
+.level-2-category .category-nav-tag .category-icon,
+.level-2-category .category-nav-tag .category-child-icon {
+    margin-right: 6px;
+}
+
+/* 补丁 因为bs会自动给a标签添加下划线，所以这里需要去掉 */
+a:hover {
+    text-decoration: none;
+}

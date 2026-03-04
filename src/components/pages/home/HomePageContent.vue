@@ -66,6 +66,16 @@ function formatDateTime(input?: string | null): string {
   return input.slice(0, 19).replace('T', ' ')
 }
 
+function updateActivityLabel(article: ArticleItem): '新发布' | '新更新' {
+  const createdAt = article.created_at ? Date.parse(article.created_at) : NaN
+  const updatedAt = article.updated_at ? Date.parse(article.updated_at) : NaN
+  const updateThresholdMs = 60 * 1000
+  if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt)) {
+    return '新发布'
+  }
+  return updatedAt - createdAt > updateThresholdMs ? '新更新' : '新发布'
+}
+
 function formatCount(value?: number | null): string {
   const num = Number(value || 0)
   return num.toLocaleString('zh-CN')
@@ -250,7 +260,9 @@ onBeforeUnmount(() => {
           <h2>最新动态</h2>
           <ul>
             <li v-for="update in latestUpdates" :key="update.id">
-              {{ update.author.username }} 发布了
+              <span class="update-type" :class="{ 'update-type--edited': updateActivityLabel(update) === '新更新' }">
+                {{ updateActivityLabel(update) }}
+              </span>
               <router-link :to="{ name: 'article-detail', params: { id: update.id } }" class="update-title">
                 {{ update.title }}
               </router-link>
@@ -415,5 +427,25 @@ onBeforeUnmount(() => {
   color: var(--primary);
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.update-type {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.update-type--edited {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: color-mix(in srgb, var(--accent) 78%, #0d6f66);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
 }
 </style>

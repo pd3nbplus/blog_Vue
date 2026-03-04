@@ -4,6 +4,7 @@ import type { CategoryItem } from '@/types/article'
 import type {
   AdminCategoryPayload,
   AdminCommentItem,
+  AdminMediaDirectoryTreeResult,
   AdminLogListResult,
   AdminMediaListResult,
 } from '@/types/admin'
@@ -67,8 +68,19 @@ export async function deleteAdminComment(id: number) {
   return requestData<null>(request.delete(`/admin/comments/${id}/`))
 }
 
-export async function getAdminMediaList(path = '') {
-  return requestData<AdminMediaListResult>(request.get('/admin/media/', { params: { path } }))
+export async function getAdminMediaList(path = '', options?: { includeFiles?: boolean }) {
+  return requestData<AdminMediaListResult>(
+    request.get('/admin/media/', {
+      params: {
+        path,
+        include_files: options?.includeFiles ?? true,
+      },
+    }),
+  )
+}
+
+export async function getAdminMediaTree() {
+  return requestData<AdminMediaDirectoryTreeResult>(request.get('/admin/media/tree/'))
 }
 
 export async function uploadAdminMediaFile(payload: { path?: string; file: File }) {

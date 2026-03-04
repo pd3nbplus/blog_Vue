@@ -94,6 +94,14 @@ function resolveImagePath(path: string, fallback: string): string {
   return resolveTempAsset(path) || fallback
 }
 
+function buildUploadedMediaPath(path: string, name: string): string {
+  const normalizedPath = path.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+  const normalizedName = name.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+  if (!normalizedPath) return normalizedName
+  if (!normalizedName) return normalizedPath
+  return `${normalizedPath}/${normalizedName}`
+}
+
 async function handleAvatarUpload() {
   if (!avatarFile.value) {
     feedback.error('请先选择头像图片')
@@ -102,10 +110,10 @@ async function handleAvatarUpload() {
   avatarUploading.value = true
   try {
     const result = await uploadAdminMediaFile({
-      path: 'site-settings/avatar',
+      path: 'temp/site-settings/avatar',
       file: avatarFile.value,
     })
-    formState.homeAvatarPath = result.path
+    formState.homeAvatarPath = buildUploadedMediaPath(result.path, result.name)
     avatarFile.value = null
     avatarUploadList.value = []
     feedback.success('头像上传成功')
@@ -124,10 +132,10 @@ async function handleHeroUpload() {
   heroUploading.value = true
   try {
     const result = await uploadAdminMediaFile({
-      path: 'site-settings/hero',
+      path: 'temp/site-settings/hero',
       file: heroFile.value,
     })
-    formState.homeHeroPath = result.path
+    formState.homeHeroPath = buildUploadedMediaPath(result.path, result.name)
     heroFile.value = null
     heroUploadList.value = []
     feedback.success('首页大图上传成功')

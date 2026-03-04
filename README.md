@@ -1,73 +1,81 @@
-# blog_vue
+# blog_vue Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+基于 `Vue 3 + TypeScript + Pinia + Ant Design Vue + Axios + Vue Router` 的博客前端。
 
-## Recommended IDE Setup
+## 1. 已落地架构
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```text
+src/
+├── components/
+│   └── Layout/AppHeader.vue
+├── config/env.ts
+├── layouts/DefaultLayout.vue
+├── router/
+│   ├── index.ts
+│   ├── routes.ts
+│   └── guards.ts
+├── services/
+│   ├── request.ts
+│   ├── article.ts
+│   └── user.ts
+├── stores/
+│   ├── index.ts
+│   └── modules/
+│       ├── article.ts
+│       └── user.ts
+├── styles/global.css
+├── types/
+│   ├── api.ts
+│   ├── article.ts
+│   └── user.ts
+├── utils/storage.ts
+├── views/
+│   ├── home/HomePage.vue
+│   ├── article/ArticleListPage.vue
+│   ├── article/ArticleDetailPage.vue
+│   └── user/LoginPage.vue
+├── App.vue
+└── main.ts
 ```
 
-### Compile and Hot-Reload for Development
+## 2. 规范执行说明
 
-```sh
+- 全局 API 通过 `services/request.ts` 统一封装。
+- 组件不直接请求后端，统一由 `stores/modules/*` 调用服务层。
+- 响应数据统一按 `{ code, message, data }` 解析。
+- Token 通过拦截器自动注入，401/403/5xx 统一错误处理。
+- 保持 TypeScript 类型约束，不使用 `any`。
+
+## 3. 环境变量
+
+新建 `.env.development`（仓库已提供示例值）：
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1
+```
+
+## 4. 本地开发
+
+```bash
+npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+默认开发端口已配置为 `5174`（`vite --host 0.0.0.0 --port 5174`）。
 
-```sh
-npm run build
-```
+## 5. 对接的后端接口
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+- `GET /home/summary/`
+- `GET /articles/`
+- `GET /articles/{id}/`
+- `GET /categories/tree/`
+- `POST /auth/login/`
+- `POST /auth/logout/`
+- `GET /auth/profile/`
 
-```sh
-npm run test:unit
-```
+## 6. 后续扩展建议（最佳实践补充）
 
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
-npx playwright install
-
-# When testing on CI, must build the project first
-npm run build
-
-# Runs the end-to-end tests
-npm run test:e2e
-# Runs the tests only on Chromium
-npm run test:e2e -- --project=chromium
-# Runs the tests of a specific file
-npm run test:e2e -- tests/example.spec.ts
-# Runs the tests in debug mode
-npm run test:e2e -- --debug
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+- 增加 `v-permission` 指令实现按钮级权限控制。
+- 增加管理端页面并对接 `/admin/articles/` 进行文章发布与编辑。
+- 引入 `markdown-it` 预览组件用于编辑器本地预览。
+- 补充 Vitest 与 Playwright 覆盖登录、列表、详情主链路。

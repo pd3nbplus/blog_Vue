@@ -42,6 +42,11 @@ export interface AdminMediaListResult {
   files: AdminMediaFileItem[]
 }
 
+export interface AdminMediaDirectoryTreeResult {
+  root: string
+  directories: string[]
+}
+
 export type AdminLogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
 export type AdminLogSource = 'audit' | 'application' | 'django'
 
