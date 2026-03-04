@@ -28,7 +28,7 @@ describe('renderMarkdownContent', () => {
     const content = '$$\ny = \\\\beta_0 + \\\\beta_1x_1\n$$'
     const result = renderMarkdownContent(content)
     expect(result.html).not.toContain('$$<br>')
-    expect(result.html).toContain('$$y = \\beta_0 + \\beta_1x_1$$')
+    expect(result.html).toContain('$$y = \\\\beta_0 + \\\\beta_1x_1$$')
   })
 
   it('should not normalize $$ marker inside fenced code block', () => {
@@ -42,5 +42,15 @@ describe('renderMarkdownContent', () => {
     const content = '$$E({\\hat{\\beta_0}}) = \\beta_0\\ E({\\hat{\\beta_1}}) = \\beta_1\\$$'
     const result = renderMarkdownContent(content)
     expect(result.html).toContain('$$E({\\hat{\\beta_0}}) = \\beta_0\\ E({\\hat{\\beta_1}}) = \\beta_1$$')
+  })
+
+  it('should preserve underscore-heavy block math text before katex rendering', () => {
+    const content = `$$
+\\tilde{h}_{\\tau+1}^{n-1} = [SG(h_{\\tau}^{n-1}),h_{\\tau+1}^{n-1}] \\\\
+q_{\\tau+1}^n,k_{\\tau+1}^n,v_{\\tau+1}^n = h_{\\tau+1}^{n-1}W_q^T
+$$`
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('$$\\tilde{h}_{\\tau+1}^{n-1}')
+    expect(result.html).not.toContain('<em>')
   })
 })

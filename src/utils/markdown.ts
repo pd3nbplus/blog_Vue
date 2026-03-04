@@ -8,6 +8,8 @@ type HeadingItem = {
   title: string
 }
 
+type MathPlaceholderMap = Map<string, string>
+
 const TOC_MARKER_PATTERN = /@?\[toc\]/gi
 const TOC_PLACEHOLDER = 'BLOG_TOC_PLACEHOLDER_TOKEN'
 const FENCED_CODE_BLOCK_PATTERN = /```[\s\S]*?```|~~~[\s\S]*?~~~/g
@@ -91,9 +93,61 @@ function normalizeMathDelimiters(content: string): string {
   return content.replace(/\\\$\$/g, () => '$$')
 }
 
-function normalizeMathBlocksOutsideCode(markdownContent: string): string {
+function isEscapedAt(input: string, index: number): boolean {
+  let backslashCount = 0
+  for (let i = index - 1; i >= 0 && input[i] === '\\'; i -= 1) {
+    backslashCount += 1
+  }
+  return backslashCount % 2 === 1
+}
+
+function protectMathBlocks(content: string, placeholders: MathPlaceholderMap): string {
+  if (!content) return content
+  let result = ''
+  let cursor = 0
+
+  while (cursor < content.length) {
+    const openIndex = content.indexOf('$$', cursor)
+    if (openIndex < 0) {
+      result += content.slice(cursor)
+      break
+    }
+
+    if (isEscapedAt(content, openIndex)) {
+      result += content.slice(cursor, openIndex + 2)
+      cursor = openIndex + 2
+      continue
+    }
+
+    const searchStart = openIndex + 2
+    let closeIndex = -1
+    for (let i = searchStart; i < content.length - 1; i += 1) {
+      if (content[i] === '$' && content[i + 1] === '$' && !isEscapedAt(content, i)) {
+        closeIndex = i
+        break
+      }
+    }
+
+    if (closeIndex < 0) {
+      result += content.slice(cursor)
+      break
+    }
+
+    result += content.slice(cursor, openIndex)
+    const token = `BLOGMATHTOKEN${placeholders.size}PLACEHOLDER`
+    const segment = content.slice(openIndex, closeIndex + 2)
+    placeholders.set(token, segment)
+    result += token
+    cursor = closeIndex + 2
+  }
+
+  return result
+}
+
+function normalizeMathBlocksOutsideCode(markdownContent: string): { content: string; placeholders: MathPlaceholderMap } {
   const content = markdownContent || ''
   const parts: string[] = []
+  const placeholders: MathPlaceholderMap = new Map()
   let cursor = 0
 
   for (const match of content.matchAll(FENCED_CODE_BLOCK_PATTERN)) {
@@ -103,7 +157,8 @@ function normalizeMathBlocksOutsideCode(markdownContent: string): string {
 
     if (start > cursor) {
       const plain = normalizeMathDelimiters(content.slice(cursor, start))
-      parts.push(normalizeBlockMathMarkers(plain))
+      const normalizedMath = normalizeBlockMathMarkers(plain)
+      parts.push(protectMathBlocks(normalizedMath, placeholders))
     }
     parts.push(matched)
     cursor = end
@@ -111,10 +166,23 @@ function normalizeMathBlocksOutsideCode(markdownContent: string): string {
 
   if (cursor < content.length) {
     const plain = normalizeMathDelimiters(content.slice(cursor))
-    parts.push(normalizeBlockMathMarkers(plain))
+    const normalizedMath = normalizeBlockMathMarkers(plain)
+    parts.push(protectMathBlocks(normalizedMath, placeholders))
   }
 
-  return parts.join('')
+  return {
+    content: parts.join(''),
+    placeholders,
+  }
+}
+
+function restoreMathPlaceholders(html: string, placeholders: MathPlaceholderMap): string {
+  if (!html || !placeholders.size) return html
+  let restored = html
+  for (const [token, segment] of placeholders) {
+    restored = restored.split(token).join(segment)
+  }
+  return restored
 }
 
 function escapeHtml(value: string): string {
@@ -261,15 +329,17 @@ function sanitize(html: string): string {
 
 export function renderMarkdownContent(markdownContent: string): { html: string; tocHtml: string } {
   const normalizedToc = normalizeTocMarkers(markdownContent || '')
-  const normalized = normalizeMathBlocksOutsideCode(normalizedToc)
+  const normalizedMath = normalizeMathBlocksOutsideCode(normalizedToc)
+  const normalized = normalizedMath.content
   const tokens = md.parse(normalized, {})
   const headings = collectHeadings(tokens)
   const tocHtmlRaw = buildTocHtml(headings)
   const renderedRaw = md.renderer.render(tokens, md.options, {})
   const renderedWithInlineToc = injectInlineToc(renderedRaw, tocHtmlRaw)
+  const restoredMathHtml = restoreMathPlaceholders(renderedWithInlineToc, normalizedMath.placeholders)
 
   return {
-    html: sanitize(renderedWithInlineToc),
+    html: sanitize(restoredMathHtml),
     tocHtml: sanitize(tocHtmlRaw),
   }
 }
