@@ -19,6 +19,11 @@ import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
 import { renderMarkdownContent } from '@/utils/markdown'
 
+type RenderMathFn = (
+  element: HTMLElement,
+  options: { delimiters: Array<{ left: string; right: string; display: boolean }> },
+) => void
+
 interface AdminArticleFormInput {
   title: string
   slug: string
@@ -117,6 +122,7 @@ const markdownTextareaRef = ref<unknown>(null)
 const previewScrollRef = ref<HTMLElement | null>(null)
 let editorTextareaEl: HTMLTextAreaElement | null = null
 let scrollingSyncLocked = false
+const loadedScripts = new Set<string>()
 
 watch(
   () => props.initialValue,
@@ -356,6 +362,69 @@ const previewHtml = computed(() => {
 
 const previewContainerRef = ref<HTMLElement | null>(null)
 
+function loadScriptOnce(src: string) {
+  if (loadedScripts.has(src)) return Promise.resolve()
+  return new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = src
+    script.async = true
+    script.onload = () => {
+      loadedScripts.add(src)
+      resolve()
+    }
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
+    document.head.appendChild(script)
+  })
+}
+
+async function enhancePreviewContent() {
+  const container = previewContainerRef.value
+  if (!container) return
+
+  await Promise.all([loadScriptOnce('/js/highlight.min.js'), loadScriptOnce('/js/katex.min.js'), loadScriptOnce('/js/auto-render.min.js')])
+
+  const win = window as Window & {
+    hljs?: {
+      highlightElement?: (el: Element) => void
+      highlightBlock?: (el: Element) => void
+    }
+    renderMathInElement?: RenderMathFn
+  }
+
+  container.querySelectorAll('pre code').forEach((el) => {
+    const codeEl = el as HTMLElement
+    if (codeEl.dataset.rawCode) {
+      codeEl.textContent = codeEl.dataset.rawCode
+    } else {
+      codeEl.dataset.rawCode = codeEl.textContent || ''
+    }
+    codeEl.classList.remove('hljs')
+    delete codeEl.dataset.highlighted
+    codeEl.removeAttribute('data-highlighted')
+
+    if (win.hljs?.highlightElement) {
+      win.hljs.highlightElement(codeEl)
+      return
+    }
+    if (win.hljs?.highlightBlock) {
+      win.hljs.highlightBlock(codeEl)
+    }
+  })
+
+  container.querySelectorAll('p').forEach((p) => {
+    p.innerHTML = p.innerHTML.replace(/\\\s*\n/g, '\\\\')
+  })
+
+  win.renderMathInElement?.(container, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false },
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+    ],
+  })
+}
+
 function resolveEditorTextareaElement(): HTMLTextAreaElement | null {
   const instance = markdownTextareaRef.value as
     | {
@@ -447,6 +516,8 @@ watch(
       }
       img.setAttribute('loading', 'lazy')
     })
+
+    await enhancePreviewContent()
   },
   { immediate: true },
 )
@@ -709,6 +780,8 @@ async function handleUploadAndSubmit() {
 
 <style scoped>
 @import '/css/github-markdown.min.css';
+@import '/css/default.min.css';
+@import 'katex/dist/katex.min.css';
 
 .editor-page {
   --editor-pane-height: min(70vh, 46rem);
