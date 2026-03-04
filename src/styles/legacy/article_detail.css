@@ -2,14 +2,15 @@
     --left-rail-width: clamp(15rem, 18vw, 20rem);
     --right-rail-width: 32vmin;
     --rail-gap: clamp(0.7rem, 1.2vw, 1.2rem);
+    --page-gutter: clamp(1.25rem, 3.8vw, 4.25rem);
     width: 100%;
     margin: 0;
     padding: 1rem 0 2rem;
 }
 
 .article-main {
-    margin-left: calc(var(--left-rail-width) + var(--rail-gap) + clamp(1rem, 2vw, 2.2rem));
-    margin-right: calc(var(--right-rail-width) + var(--rail-gap) + clamp(1rem, 2vw, 2.2rem));
+    margin-left: calc(var(--left-rail-width) + var(--rail-gap) + var(--page-gutter));
+    margin-right: calc(var(--right-rail-width) + var(--rail-gap) + var(--page-gutter));
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--surface);
@@ -71,7 +72,7 @@
 
 .meta-fixed {
     position: fixed;
-    left: clamp(1rem, 2.2vw, 2.4rem);
+    left: var(--page-gutter);
     top: 88px;
     width: var(--left-rail-width);
     max-height: calc(100vh - 108px);
@@ -109,7 +110,7 @@
 
 .toc-container {
     position: fixed;
-    right: clamp(1rem, 2.2vw, 2.4rem);
+    right: var(--page-gutter);
     top: 88px;
     width: var(--right-rail-width);
     max-height: calc(100vh - 108px);
@@ -340,8 +341,8 @@
 
 @media (max-width: 1200px) {
     .article-main {
-        margin-left: calc(var(--left-rail-width) + 1.2rem);
-        margin-right: 1rem;
+        margin-left: calc(var(--left-rail-width) + var(--page-gutter));
+        margin-right: var(--page-gutter);
     }
 
     .toc-container {
