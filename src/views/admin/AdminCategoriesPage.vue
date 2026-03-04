@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { DeleteOutlined, DownCircleOutlined, EditOutlined, PlusOutlined, RightCircleOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import { CaretRightFilled, DeleteOutlined, DownCircleOutlined, EditOutlined, PlusOutlined, RightCircleOutlined, UploadOutlined } from '@ant-design/icons-vue'
 import type { UploadProps } from 'ant-design-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
@@ -238,6 +238,7 @@ onMounted(() => {
             alt=""
             class="category-icon"
           />
+          <CaretRightFilled v-if="row.depth > 0" class="child-prefix-icon" aria-hidden="true" />
           <span class="category-name">{{ row.item.name }}</span>
         </div>
 
@@ -363,6 +364,11 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.child-prefix-icon {
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text) 18%);
 }
 
 .toggle-btn {
