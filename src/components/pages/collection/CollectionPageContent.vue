@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 
 import AppImage from '@/components/common/AppImage.vue'
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
@@ -7,6 +8,19 @@ import type { ArticleItem, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 
 const { collection, otherCollections, list, total, page, pageSize, loading, notFound, handlePageChange } = useCollectionPage()
+
+const totalPages = computed(() => {
+  if (!pageSize.value) return 1
+  return Math.max(1, Math.ceil(total.value / pageSize.value))
+})
+
+const pageNumbers = computed(() => {
+  const pages: number[] = []
+  for (let num = 1; num <= totalPages.value; num += 1) {
+    if (num > page.value - 3 && num < page.value + 3) pages.push(num)
+  }
+  return pages
+})
 
 function getCoverSrc(path?: string | null): string {
   return resolveTempAsset(path) || '/img/hero-image.jpg'
@@ -31,10 +45,6 @@ function articleCategoryIcon(article: ArticleItem): string {
 
 function collectionArticleTotal(item?: CollectionItem | null): string {
   return formatCount(item?.article_count || 0)
-}
-
-function showTotal(totalCount: number): string {
-  return `共 ${totalCount} 篇`
 }
 </script>
 
@@ -107,15 +117,29 @@ function showTotal(totalCount: number): string {
             <h2 v-else class="text-center">该合集下暂无已发布文章</h2>
           </div>
 
-          <div class="pagination-wrap">
-            <a-pagination
-              :current="page"
-              :page-size="pageSize"
-              :total="total"
-              :show-size-changer="false"
-              :show-total="showTotal"
-              @change="handlePageChange"
-            />
+          <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+              <ul class="pagination">
+                <li v-if="page > 1" class="page-item">
+                  <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(1)">首页</a>
+                </li>
+                <li v-if="page > 1" class="page-item">
+                  <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(page - 1)">上一页</a>
+                </li>
+
+                <li v-for="num in pageNumbers" :key="num" class="page-item" :class="{ active: num === page }">
+                  <a v-if="num !== page" class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(num)">{{ num }}</a>
+                  <span v-else class="page-link">{{ num }}</span>
+                </li>
+
+                <li v-if="page < totalPages" class="page-item">
+                  <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(page + 1)">下一页</a>
+                </li>
+                <li v-if="page < totalPages" class="page-item">
+                  <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(totalPages)">末页</a>
+                </li>
+              </ul>
+            </nav>
           </div>
         </template>
 
@@ -130,97 +154,23 @@ function showTotal(totalCount: number): string {
   </a-spin>
 </template>
 
-<style scoped>
+<style>
+@import '/css/bootstrap.min.css';
+@import '@/styles/legacy/q_and_cbase.css';
 
 .collection-layout {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(0.8rem, 1.4vw, 1.2rem);
-  max-width: min(96vw, 1560px);
-  margin: 20px auto;
-}
-
-.collection-layout .left-column {
-  flex: 0 0 clamp(230px, 21vw, 320px);
-  min-width: 220px;
-}
-
-.collection-layout .right-column {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.collection-layout .query-content {
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  padding: 10px 14px;
-  background: var(--surface);
-  margin-bottom: 12px;
-}
-
-.collection-layout .query-content h2 {
-  margin: 0;
-  line-height: 1.35;
-  font-size: 1.38rem;
-}
-
-.collection-layout .query-content .query-str {
-  margin-left: 8px;
-  color: var(--primary);
-  font-size: clamp(1.24rem, 2.2vw, 1.86rem);
-  font-weight: 700;
-  font-family: var(--font-main);
-}
-
-.collection-layout .main-articles ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.collection-layout .main-articles li {
-  padding: 16px;
-  margin-bottom: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-}
-
-.collection-layout .main-articles li:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-  box-shadow: var(--tile-hover-shadow);
-}
-
-.collection-layout .main-articles .text-center {
-  text-align: center;
-  color: var(--muted);
-  padding: 22px 0;
-}
-
-.pagination-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: center;
-}
-
-.collection-layout .collection-header p {
-  margin: 0;
-  color: var(--muted);
+  align-items: stretch;
 }
 
 .collection-hero {
   overflow: hidden;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
+  border: 1px solid color-mix(in srgb, #145ca8 25%, var(--border));
   background:
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 48%),
-    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 46%),
+    radial-gradient(circle at 0% 0%, rgb(20 92 168 / 20%), transparent 48%),
+    radial-gradient(circle at 100% 0%, rgb(16 185 129 / 20%), transparent 46%),
     var(--surface);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 18px 38px rgb(16 24 40 / 12%);
   margin-bottom: 12px;
 }
 
@@ -240,9 +190,9 @@ function showTotal(totalCount: number): string {
   display: inline-flex;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
-  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
-  color: var(--primary);
+  border: 1px solid color-mix(in srgb, #145ca8 35%, var(--border));
+  background: color-mix(in srgb, #145ca8 15%, var(--surface));
+  color: #145ca8;
   font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -332,8 +282,8 @@ function showTotal(totalCount: number): string {
 
 .other-collection-link:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
-  box-shadow: var(--tile-hover-shadow);
+  border-color: color-mix(in srgb, #145ca8 28%, var(--border));
+  box-shadow: var(--shadow-soft);
 }
 
 .other-collection-cover {
@@ -372,15 +322,15 @@ function showTotal(totalCount: number): string {
 }
 
 .collection-header {
-  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+  border: 1px solid color-mix(in srgb, #145ca8 24%, var(--border));
   background:
-    linear-gradient(
-      130deg,
-      color-mix(in srgb, var(--primary) 12%, transparent),
-      color-mix(in srgb, var(--accent) 8%, transparent) 46%,
-      color-mix(in srgb, var(--primary) 8%, transparent)
-    ),
+    linear-gradient(130deg, rgb(20 92 168 / 10%), rgb(14 165 233 / 8%) 46%, rgb(16 185 129 / 10%)),
     var(--surface);
+}
+
+.collection-header p {
+  margin: 0;
+  color: var(--muted);
 }
 
 @media (max-width: 960px) {

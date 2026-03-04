@@ -21,6 +21,19 @@ const spotlightSwitchDelayMs = 320
 const spotlightRefreshDurationMs = 900
 let spotlightTimer: number | undefined
 
+const totalPages = computed(() => {
+  if (!pageSize.value) return 1
+  return Math.max(1, Math.ceil(total.value / pageSize.value))
+})
+
+const pageNumbers = computed(() => {
+  const pages: number[] = []
+  for (let num = 1; num <= totalPages.value; num += 1) {
+    if (num > page.value - 3 && num < page.value + 3) pages.push(num)
+  }
+  return pages
+})
+
 const currentCategory = computed(() => {
   if (!selectedCategory.value) return null
   return findCategoryById(categories.value, selectedCategory.value)
@@ -178,10 +191,6 @@ function handleManualSpotlightRefresh(): void {
   }
 }
 
-function showTotal(totalCount: number): string {
-  return `共 ${totalCount} 篇`
-}
-
 watch(
   [isCategoryRoute, isQueryRoute, selectedCategory, query],
   ([categoryRoute, queryRoute, categoryId]) => {
@@ -209,12 +218,12 @@ onUnmounted(() => {
 
 <template>
   <a-spin :spinning="loading">
-    <div class="article-list-page main-content">
+    <div class="main-content">
       <div class="column left-column">
         <div class="spotlight-panel">
           <template v-if="isCategoryRoute || isQueryRoute">
-            <article class="spotlight-card app-surface-card">
-              <div class="spotlight-card-header">
+            <article class="spotlight-card card app-surface-card">
+              <div class="card-header spotlight-card-header">
                 <h3>随机推荐文章</h3>
                 <button class="spotlight-refresh-btn" type="button" :disabled="spotlightLoading" @click.prevent="handleManualSpotlightRefresh">
                   {{ spotlightLoading ? '刷新中...' : '随机刷新一篇' }}
@@ -223,7 +232,7 @@ onUnmounted(() => {
               <div class="spotlight-countdown">
                 <span :key="`spotlight-countdown-${spotlightCountdownCycle}`"></span>
               </div>
-              <div class="spotlight-card-body">
+              <div class="card-body spotlight-card-body">
                 <router-link
                   v-if="spotlightArticle"
                   :to="{ name: 'article-detail', params: { id: spotlightArticle.id } }"
@@ -358,266 +367,39 @@ onUnmounted(() => {
           <h2 v-else class="text-center">没有找到相关文章...</h2>
         </div>
 
-        <div class="pagination-wrap">
-          <a-pagination
-            :current="page"
-            :page-size="pageSize"
-            :total="total"
-            :show-size-changer="false"
-            :show-total="showTotal"
-            @change="handlePageChange"
-          />
+        <div class="d-flex justify-content-center">
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              <li v-if="page > 1" class="page-item">
+                <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(1)">首页</a>
+              </li>
+              <li v-if="page > 1" class="page-item">
+                <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(page - 1)">上一页</a>
+              </li>
+
+              <li v-for="num in pageNumbers" :key="num" class="page-item" :class="{ active: num === page }">
+                <a v-if="num !== page" class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(num)">{{ num }}</a>
+                <span v-else class="page-link">{{ num }}</span>
+              </li>
+
+              <li v-if="page < totalPages" class="page-item">
+                <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(page + 1)">下一页</a>
+              </li>
+              <li v-if="page < totalPages" class="page-item">
+                <a class="page-link" href="javascript:void(0);" @click.prevent="handlePageChange(totalPages)">末页</a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
   </a-spin>
 </template>
 
-<style scoped>
-.article-list-page {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(0.8rem, 1.4vw, 1.2rem);
-  max-width: min(96vw, 1560px);
-  margin: 20px auto;
-}
-
-.article-list-page .left-column {
-  flex: 0 0 clamp(230px, 21vw, 320px);
-  min-width: 220px;
-}
-
-.article-list-page .right-column {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.article-list-page .query-content {
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  padding: 10px 14px;
-  background: var(--surface);
-  margin-bottom: 12px;
-}
-
-.article-list-page .query-content h2 {
-  margin: 0;
-  line-height: 1.35;
-  font-size: 1.38rem;
-}
-
-.article-list-page .query-content .query-str {
-  margin-left: 8px;
-  color: var(--primary);
-  font-size: clamp(1.24rem, 2.2vw, 1.86rem);
-  font-weight: 700;
-  font-family: var(--font-main);
-}
-
-.article-list-page .main-articles ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.article-list-page .main-articles li {
-  padding: 16px;
-  margin-bottom: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-}
-
-.article-list-page .main-articles li:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-  box-shadow: var(--tile-hover-shadow);
-}
-
-.article-list-page .main-articles .text-center {
-  text-align: center;
-  color: var(--muted);
-  padding: 22px 0;
-}
-
-.article-list-page .pagination-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: center;
-}
-
-.article-list-page .categories-title {
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  padding: 10px 14px;
-  background: var(--surface);
-  margin-bottom: 10px;
-}
-
-.article-list-page .categories-title h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.12rem;
-}
-
-.article-list-page .categories ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow-soft);
-}
-
-.article-list-page .category-item {
-  border-bottom: 1px solid var(--border);
-}
-
-.article-list-page .category-item:last-child {
-  border-bottom: 0;
-}
-
-.article-list-page .category-item > a {
-  text-decoration: none;
-  color: var(--text);
-  font-size: 0.98rem;
-  font-weight: 650;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.72rem 0.92rem;
-  border-left: 3px solid transparent;
-  border-radius: 8px;
-  transition: color 0.22s, background-color 0.22s, border-color 0.22s;
-}
-
-.article-list-page .category-item > a:hover {
-  color: var(--primary);
-  background: var(--surface-2);
-  border-left-color: var(--primary);
-}
-
-.article-list-page .subcategory-list {
-  margin: 0.25rem 0.55rem 0.55rem 1.1rem;
-  padding: 0.35rem 0.45rem 0.35rem 0.75rem;
-  background: color-mix(in srgb, var(--surface-2) 78%, var(--surface));
-  border-radius: 8px;
-  position: relative;
-}
-
-.article-list-page .subcategory-list::before {
-  content: '';
-  position: absolute;
-  left: 0.42rem;
-  top: 0.35rem;
-  bottom: 0.35rem;
-  border-left: 2px dashed color-mix(in srgb, var(--muted) 45%, transparent);
-  pointer-events: none;
-}
-
-.article-list-page .subcategory-list li {
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
-}
-
-.article-list-page .subcategory-list li:last-child {
-  border-bottom: 0;
-}
-
-.article-list-page .subcategory-list li a {
-  text-decoration: none;
-  color: var(--muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.36rem;
-  padding: 0.46rem 0.55rem 0.46rem 1.03rem;
-  border-radius: 6px;
-  transition: color 0.2s, background-color 0.2s;
-}
-
-.article-list-page .subcategory-list li a:hover {
-  color: var(--text);
-  background: var(--surface-2);
-}
-
-.article-list-page .category-icon,
-.article-list-page .category-child-icon {
-  width: 0.9rem;
-  height: 0.9rem;
-  object-fit: contain;
-}
-
-.article-list-page .level-1-category {
-  display: flex;
-  justify-content: center;
-}
-
-.article-list-page .level-1-category .category-row,
-.article-list-page .level-2-category .category-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0;
-}
-
-.article-list-page .level-1-category .category-nav-tag {
-  color: var(--primary);
-  background: var(--surface-2);
-  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
-  border-radius: 10px;
-  font-size: 1.04rem;
-  font-weight: 650;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-align: left;
-  padding: 10px 16px;
-  transition: color 0.2s, background-color 0.2s, transform 0.2s;
-  cursor: pointer;
-  user-select: none;
-}
-
-.article-list-page .level-1-category .category-nav-tag:hover,
-.article-list-page .level-1-category .category-nav-tag.active {
-  color: var(--btn-text-on-primary);
-  background: var(--primary);
-}
-
-.article-list-page .level-2-category .category-nav-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: var(--text);
-  font-size: 0.95rem;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-  padding: 6px 12px;
-}
-
-.article-list-page .level-2-category .category-nav-tag.active,
-.article-list-page .level-2-category .category-nav-tag:hover {
-  color: var(--btn-text-on-primary);
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-.article-list-page .level-1-category .category-nav-tag:hover,
-.article-list-page .level-2-category .category-nav-tag:hover {
-  transform: translateY(-1px);
-}
+<style>
+@import '/css/bootstrap.min.css';
+@import '@/styles/legacy/q_and_cbase.css';
+@import '@/styles/legacy/category.css';
 
 .spotlight-panel {
   margin-bottom: 10px;
@@ -636,9 +418,9 @@ onUnmounted(() => {
 
 .spotlight-card {
   min-height: clamp(11rem, 22vw, 14rem);
-  border: 0;
-  box-shadow: none;
-  background: transparent;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .spotlight-card-header {
@@ -782,18 +564,6 @@ onUnmounted(() => {
   align-items: center;
   text-align: center;
   color: var(--muted);
-}
-
-@media screen and (max-width: 960px) {
-  .article-list-page {
-    flex-direction: column;
-  }
-
-  .article-list-page .left-column,
-  .article-list-page .right-column {
-    min-width: 100%;
-    flex: 1 1 auto;
-  }
 }
 
 </style>
