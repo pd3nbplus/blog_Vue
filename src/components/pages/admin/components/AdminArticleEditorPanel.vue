@@ -341,9 +341,14 @@ async function handleMarkdownFileUpload(fileOverride?: File | null) {
 }
 
 const handleCoverBeforeUpload: UploadProps['beforeUpload'] = (file) => {
+  if (coverUploading.value) {
+    message.warning('封面正在上传中，请稍候')
+    return false
+  }
   const selected = file as File
   selectedCoverFile.value = selected
   coverUploadList.value = [{ uid: selected.name, name: selected.name, status: 'done' }]
+  void handleCoverFileUpload(selected)
   return false
 }
 
@@ -360,8 +365,8 @@ const coverPreview = computed(() => {
   return resolveTempAsset(value)
 })
 
-async function handleCoverFileUpload() {
-  const file = selectedCoverFile.value
+async function handleCoverFileUpload(fileOverride?: File | null) {
+  const file = fileOverride ?? selectedCoverFile.value
   if (!file) {
     message.warning('请先选择封面图片')
     return
@@ -742,12 +747,11 @@ async function handleUploadAndSubmit() {
                 accept="image/*"
                 @remove="handleCoverRemove"
               >
-                <a-button size="small">
+                <a-button size="small" :loading="coverUploading">
                   <UploadOutlined />
                   选择封面
                 </a-button>
               </a-upload>
-              <a-button type="default" size="small" :loading="coverUploading" @click="handleCoverFileUpload">上传封面</a-button>
             </div>
             <AppImage v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" fallback-src="/img/hero-image.jpg" />
           </a-form-item>
