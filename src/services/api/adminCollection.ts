@@ -10,22 +10,22 @@ export interface AdminCollectionListQuery {
   ordering?: string
 }
 
-export async function getAdminCollectionList(params: AdminCollectionListQuery = {}) {
+export async function getAdminCollectionList(params: AdminCollectionListQuery = {}): Promise<PaginatedData<CollectionItem>> {
   return requestData<PaginatedData<CollectionItem>>(request.get('/admin/collections/', { params }))
 }
 
-export async function getAdminCollectionDetail(id: number) {
+export async function getAdminCollectionDetail(id: number): Promise<CollectionDetail> {
   return requestData<CollectionDetail>(request.get(`/admin/collections/${id}/`))
 }
 
-export async function createAdminCollection(payload: AdminCollectionPayload) {
+export async function createAdminCollection(payload: AdminCollectionPayload): Promise<CollectionDetail> {
   return requestData<CollectionDetail>(request.post('/admin/collections/', payload))
 }
 
-export async function updateAdminCollection(id: number, payload: Partial<AdminCollectionPayload>) {
+export async function updateAdminCollection(id: number, payload: Partial<AdminCollectionPayload>): Promise<CollectionDetail> {
   return requestData<CollectionDetail>(request.patch(`/admin/collections/${id}/`, payload))
 }
 
-export async function deleteAdminCollection(id: number) {
+export async function deleteAdminCollection(id: number): Promise<null> {
   return requestData<null>(request.delete(`/admin/collections/${id}/`))
 }

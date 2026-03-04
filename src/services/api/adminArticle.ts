@@ -15,27 +15,27 @@ export interface AdminArticleListQuery {
   ordering?: `${'' | '-'}${AdminArticleOrderingField}`
 }
 
-export async function getAdminArticleList(params: AdminArticleListQuery) {
+export async function getAdminArticleList(params: AdminArticleListQuery): Promise<PaginatedData<ArticleItem>> {
   return requestData<PaginatedData<ArticleItem>>(request.get('/admin/articles/', { params }))
 }
 
-export async function getAdminArticleDetail(id: number) {
+export async function getAdminArticleDetail(id: number): Promise<ArticleDetail> {
   return requestData<ArticleDetail>(request.get(`/admin/articles/${id}/`))
 }
 
-export async function createAdminArticle(payload: AdminArticlePayload) {
+export async function createAdminArticle(payload: AdminArticlePayload): Promise<ArticleDetail> {
   return requestData<ArticleDetail>(request.post('/admin/articles/', payload))
 }
 
-export async function updateAdminArticle(id: number, payload: Partial<AdminArticlePayload>) {
+export async function updateAdminArticle(id: number, payload: Partial<AdminArticlePayload>): Promise<ArticleDetail> {
   return requestData<ArticleDetail>(request.patch(`/admin/articles/${id}/`, payload))
 }
 
-export async function archiveAdminArticle(id: number) {
+export async function archiveAdminArticle(id: number): Promise<null> {
   return requestData<null>(request.delete(`/admin/articles/${id}/`))
 }
 
-export async function getAdminDashboardSummary() {
+export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary> {
   return requestData<AdminDashboardSummary>(request.get('/admin/dashboard/summary/'))
 }
 
@@ -57,7 +57,7 @@ export interface ResolveLocalImagesResponse {
   unresolved_refs: string[]
 }
 
-export async function resolveAdminArticleLocalImages(payload: ResolveLocalImagesRequest) {
+export async function resolveAdminArticleLocalImages(payload: ResolveLocalImagesRequest): Promise<ResolveLocalImagesResponse> {
   const formData = new FormData()
   formData.append('markdown_content', payload.markdown_content)
   formData.append('source_markdown_path', payload.source_markdown_path)
@@ -81,7 +81,10 @@ export async function resolveAdminArticleLocalImages(payload: ResolveLocalImages
   )
 }
 
-export async function uploadAdminArticleMarkdown(payload: { file: File; source_markdown_path?: string }) {
+export async function uploadAdminArticleMarkdown(payload: {
+  file: File
+  source_markdown_path?: string
+}): Promise<{ markdown_content: string; source_markdown_path: string; saved_to: string }> {
   const formData = new FormData()
   formData.append('markdown_file', payload.file, payload.file.name)
   if (payload.source_markdown_path) {
@@ -96,7 +99,10 @@ export async function uploadAdminArticleMarkdown(payload: { file: File; source_m
   )
 }
 
-export async function uploadAdminArticleCover(payload: { file: File; source_markdown_path?: string }) {
+export async function uploadAdminArticleCover(payload: {
+  file: File
+  source_markdown_path?: string
+}): Promise<{ cover_path: string; saved_to: string }> {
   const formData = new FormData()
   formData.append('cover_file', payload.file, payload.file.name)
   if (payload.source_markdown_path) {

@@ -1,27 +1,29 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-const AdminLayout = () => import('@/layouts/AdminLayout.vue')
-const DefaultLayout = () => import('@/layouts/DefaultLayout.vue')
+type RouteComponentLoader = NonNullable<RouteRecordRaw['component']>
 
-const AdminArticlePage = () => import('@/views/admin/AdminArticlePage.vue')
-const AdminCategoriesPage = () => import('@/views/admin/AdminCategoriesPage.vue')
-const AdminCommentsPage = () => import('@/views/admin/AdminCommentsPage.vue')
-const AdminCollectionsPage = () => import('@/views/admin/AdminCollectionsPage.vue')
-const AdminDashboardPage = () => import('@/views/admin/AdminDashboardPage.vue')
-const AdminLoginPage = () => import('@/views/admin/AdminLoginPage.vue')
-const AdminLogoutPage = () => import('@/views/admin/AdminLogoutPage.vue')
-const AdminMediaPage = () => import('@/views/admin/AdminMediaPage.vue')
-const AdminLogsPage = () => import('@/views/admin/AdminLogsPage.vue')
-const AdminPersonalSettingsPage = () => import('@/views/admin/AdminPersonalSettingsPage.vue')
-const AdminSuperRedirectPage = () => import('@/views/admin/AdminSuperRedirectPage.vue')
+const AdminLayout: RouteComponentLoader = () => import('@/layouts/AdminLayout.vue')
+const DefaultLayout: RouteComponentLoader = () => import('@/layouts/DefaultLayout.vue')
 
-const HomePage = () => import('@/views/home/HomePage.vue')
-const ArticleListPage = () => import('@/views/article/ArticleListPage.vue')
-const CollectionPage = () => import('@/views/collection/CollectionPage.vue')
-const AboutPage = () => import('@/views/article/AboutPage.vue')
-const ContactPage = () => import('@/views/article/ContactPage.vue')
-const ArticleDetailPage = () => import('@/views/article/ArticleDetailPage.vue')
-const LoginPage = () => import('@/views/user/LoginPage.vue')
+const AdminArticlePage: RouteComponentLoader = () => import('@/views/admin/AdminArticlePage.vue')
+const AdminCategoriesPage: RouteComponentLoader = () => import('@/views/admin/AdminCategoriesPage.vue')
+const AdminCommentsPage: RouteComponentLoader = () => import('@/views/admin/AdminCommentsPage.vue')
+const AdminCollectionsPage: RouteComponentLoader = () => import('@/views/admin/AdminCollectionsPage.vue')
+const AdminDashboardPage: RouteComponentLoader = () => import('@/views/admin/AdminDashboardPage.vue')
+const AdminLoginPage: RouteComponentLoader = () => import('@/views/admin/AdminLoginPage.vue')
+const AdminLogoutPage: RouteComponentLoader = () => import('@/views/admin/AdminLogoutPage.vue')
+const AdminMediaPage: RouteComponentLoader = () => import('@/views/admin/AdminMediaPage.vue')
+const AdminLogsPage: RouteComponentLoader = () => import('@/views/admin/AdminLogsPage.vue')
+const AdminPersonalSettingsPage: RouteComponentLoader = () => import('@/views/admin/AdminPersonalSettingsPage.vue')
+const AdminSuperRedirectPage: RouteComponentLoader = () => import('@/views/admin/AdminSuperRedirectPage.vue')
+
+const HomePage: RouteComponentLoader = () => import('@/views/home/HomePage.vue')
+const ArticleListPage: RouteComponentLoader = () => import('@/views/article/ArticleListPage.vue')
+const CollectionPage: RouteComponentLoader = () => import('@/views/collection/CollectionPage.vue')
+const AboutPage: RouteComponentLoader = () => import('@/views/article/AboutPage.vue')
+const ContactPage: RouteComponentLoader = () => import('@/views/article/ContactPage.vue')
+const ArticleDetailPage: RouteComponentLoader = () => import('@/views/article/ArticleDetailPage.vue')
+const LoginPage: RouteComponentLoader = () => import('@/views/user/LoginPage.vue')
 
 export const routes: RouteRecordRaw[] = [
   {

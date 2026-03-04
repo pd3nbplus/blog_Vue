@@ -19,7 +19,7 @@ export function getApiErrorMessage(error: unknown): string {
   return ''
 }
 
-export async function requestData<T>(requestPromise: Promise<AxiosResponse<ApiResponse<T>>>) {
+export async function requestData<T>(requestPromise: Promise<AxiosResponse<ApiResponse<T>>>): Promise<T> {
   const response = await requestPromise
   return response.data.data
 }
