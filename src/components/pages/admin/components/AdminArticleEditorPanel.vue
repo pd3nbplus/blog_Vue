@@ -4,6 +4,7 @@ import { message } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { FormInstance } from 'ant-design-vue'
 
+import AppImage from '@/components/common/AppImage.vue'
 import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
@@ -12,6 +13,7 @@ import {
 import type { AdminArticlePayload } from '@/types/article'
 import type { CategoryOption } from '@/utils/article'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
+import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
 import { renderMarkdownContent } from '@/utils/markdown'
 
@@ -319,35 +321,11 @@ function getPreviewStatusText(status: 'matched' | 'unmatched' | 'ambiguous'): st
   return '未匹配'
 }
 
-function isRemoteHttpImage(src: string): boolean {
-  return /^https?:\/\//i.test((src || '').trim())
-}
-
-function isCsdnImageHost(src: string): boolean {
-  try {
-    const host = new URL(src).hostname.toLowerCase()
-    return host === 'csdnimg.cn' || host.endsWith('.csdnimg.cn')
-  } catch {
-    return false
-  }
-}
-
-function buildImageProxyUrl(remoteImageUrl: string): string {
-  try {
-    const url = new URL(remoteImageUrl)
-    url.hash = ''
-    return `${BACKEND_ORIGIN}/api/v1/image-proxy/?url=${encodeURIComponent(url.toString())}`
-  } catch {
-    const noHash = remoteImageUrl.split('#', 1)[0] || remoteImageUrl
-    return `${BACKEND_ORIGIN}/api/v1/image-proxy/?url=${encodeURIComponent(noHash)}`
-  }
-}
-
 function rewriteCsdnImageSrcInHtml(html: string): string {
   if (!html) return html
   return html.replace(HTML_IMAGE_SRC_PATTERN, (_, prefix: string, src: string, suffix: string) => {
     if (!isRemoteHttpImage(src) || !isCsdnImageHost(src)) return `${prefix}${src}${suffix}`
-    return `${prefix}${buildImageProxyUrl(src)}${suffix}`
+    return `${prefix}${buildImageProxyUrl(src, BACKEND_ORIGIN)}${suffix}`
   })
 }
 
@@ -511,7 +489,7 @@ async function handleUploadAndSubmit() {
               <input type="file" accept="image/*" @change="handleCoverFileSelected" />
               <a-button type="default" size="small" :loading="coverUploading" @click="handleCoverFileUpload">上传封面</a-button>
             </div>
-            <img v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" />
+            <AppImage v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" fallback-src="/img/hero-image.jpg" />
           </a-form-item>
         </div>
 

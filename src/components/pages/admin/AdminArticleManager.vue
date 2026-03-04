@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppImage from '@/components/common/AppImage.vue'
 import AdminArticleEditorPanel from '@/components/pages/admin/components/AdminArticleEditorPanel.vue'
 import { useAdminArticleManager } from '@/composables/pages/useAdminArticleManager'
 import type { AdminArticleOrderingField } from '@/services/adminArticle'
@@ -215,7 +216,7 @@ function handleTableChange(
         >
           <a-table-column title="缩略图" key="cover" :width="100" fixed="left">
             <template #default="{ record }">
-              <img :src="getCoverSrc(record.cover_path)" alt="cover" class="thumb" />
+              <AppImage :src="getCoverSrc(record.cover_path)" alt="cover" class="thumb" fallback-src="/img/hero-image.jpg" />
             </template>
           </a-table-column>
           <a-table-column title="文章" key="title" :width="350" :sorter="true" :sort-order="getSortOrder('title')">
