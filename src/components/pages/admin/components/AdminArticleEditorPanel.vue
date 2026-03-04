@@ -129,25 +129,27 @@ interface CategoryTreeSelectNode {
   value: number
   key: number
   selectable: boolean
-  isTopLevel: boolean
   children?: CategoryTreeSelectNode[]
 }
 
 const categoryTreeData = computed<CategoryTreeSelectNode[]>(() => {
-  const mapNodes = (nodes: CategoryItem[], isTopLevel: boolean): CategoryTreeSelectNode[] =>
+  const mapNodes = (nodes: CategoryItem[]): CategoryTreeSelectNode[] =>
     nodes.map((node) => {
-      const children = node.children?.length ? mapNodes(node.children, false) : undefined
+      const children = node.children?.length ? mapNodes(node.children) : undefined
       const hasChildren = Boolean(children && children.length)
       return {
         title: node.name,
         value: node.id,
         key: node.id,
         selectable: !hasChildren,
-        isTopLevel,
         ...(children ? { children } : {}),
       }
     })
-  return mapNodes(props.categoryTree || [], true)
+  return mapNodes(props.categoryTree || [])
+})
+
+const topLevelCategoryIdSet = computed<Set<number>>(() => {
+  return new Set((props.categoryTree || []).map((item) => item.id))
 })
 
 const categoryExpandedKeys = computed<number[]>(() => {
@@ -165,16 +167,15 @@ function handleCategoryTreeExpand(
   _expandedKeys: Array<string | number>,
   info: {
     expanded: boolean
-    node?: { value?: string | number; key?: string | number; isTopLevel?: boolean; dataRef?: { isTopLevel?: boolean } }
+    node?: { value?: string | number; key?: string | number }
   },
 ): void {
   const node = info.node
   if (!node) return
-  const isTopLevel = Boolean(node.isTopLevel ?? node.dataRef?.isTopLevel)
-  if (!isTopLevel) return
 
   const nodeKey = Number(node.value ?? node.key)
   if (!Number.isFinite(nodeKey) || nodeKey <= 0) return
+  if (!topLevelCategoryIdSet.value.has(nodeKey)) return
 
   expandedParentCategoryId.value = info.expanded ? nodeKey : null
 }
