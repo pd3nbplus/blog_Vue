@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import type { UploadProps } from 'ant-design-vue'
 
 import { useFeedback } from '@/composables/useFeedback'
 import { createAdminCategory, deleteAdminCategory, getAdminCategoryTree, updateAdminCategory } from '@/services/admin'
@@ -28,6 +29,7 @@ const modal = reactive({
 })
 
 const iconFile = ref<File | null>(null)
+const iconUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>([])
 
 const categoryMap = computed(() => {
   const map = new Map<number, CategoryItem>()
@@ -115,17 +117,26 @@ function openModal(action: ModalAction, categoryId: number | null = null) {
   modal.categoryId = action === 'create_parent' ? null : categoryId
   modal.name = action === 'edit' ? categoryMap.value.get(categoryId || -1)?.name || '' : ''
   iconFile.value = null
+  iconUploadList.value = []
 }
 
 function closeModal() {
   modal.visible = false
   modal.name = ''
   iconFile.value = null
+  iconUploadList.value = []
 }
 
-function handleIconFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  iconFile.value = input.files?.[0] || null
+const handleIconBeforeUpload: UploadProps['beforeUpload'] = (file) => {
+  iconFile.value = file as File
+  iconUploadList.value = [{ uid: (file as File).name, name: (file as File).name, status: 'done' }]
+  return false
+}
+
+const handleIconRemove: UploadProps['onRemove'] = () => {
+  iconFile.value = null
+  iconUploadList.value = []
+  return true
 }
 
 async function handleDelete(categoryId: number) {
@@ -271,8 +282,19 @@ onMounted(() => {
             <input id="name" v-model="modal.name" type="text" class="form-control" required />
           </div>
           <div class="form-group">
-            <label for="thumbnail_file">分类图标</label>
-            <input id="thumbnail_file" type="file" class="form-control" @change="handleIconFileChange" />
+            <label>分类图标</label>
+            <a-upload
+              :file-list="iconUploadList"
+              :before-upload="handleIconBeforeUpload"
+              :max-count="1"
+              accept="image/*"
+              @remove="handleIconRemove"
+            >
+              <a-button>
+                <UploadOutlined />
+                选择图片
+              </a-button>
+            </a-upload>
           </div>
           <button type="submit" class="btn btn-primary">保存</button>
         </form>
