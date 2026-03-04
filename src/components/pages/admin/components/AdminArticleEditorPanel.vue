@@ -361,7 +361,9 @@ const handleCoverRemove: UploadProps['onRemove'] = () => {
 const coverPreview = computed(() => {
   const value = formState.cover_path.trim()
   if (!value) return ''
-  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('/')) return value
+  if (value.startsWith('http://') || value.startsWith('https://')) return value
+  if (value.startsWith('/img/')) return value
+  if (value.startsWith('/')) return `${BACKEND_ORIGIN}${value}`
   return resolveTempAsset(value)
 })
 
