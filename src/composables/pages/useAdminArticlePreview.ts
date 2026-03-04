@@ -63,11 +63,10 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
     const container = options.previewContainerRef.value
     if (!container) return
 
-    await Promise.all([
-      loadScriptOnce('/js/highlight.min.js'),
-      loadScriptOnce('/js/katex.min.js'),
-      loadScriptOnce('/js/auto-render.min.js'),
-    ])
+    // Load math renderer in strict order to avoid auto-render loading before katex.
+    await loadScriptOnce('/js/katex.min.js')
+    await loadScriptOnce('/js/auto-render.min.js')
+    await loadScriptOnce('/js/highlight.min.js')
 
     const win = window as Window & {
       hljs?: {

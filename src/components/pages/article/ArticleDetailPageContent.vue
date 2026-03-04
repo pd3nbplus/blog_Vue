@@ -60,7 +60,6 @@ const articleMetadata = computed(() => {
     { label: '阅读量', value: String(detail.value.view_count ?? 0) },
     { label: '字数', value: `${wordCount.value}` },
     { label: '预估阅读', value: `${estimatedReadMinutes.value} 分钟` },
-    { label: 'Slug', value: detail.value.slug || '-' },
     { label: '状态', value: detail.value.status || '-' },
   ]
   if (detail.value.is_pinned) {
@@ -134,8 +133,10 @@ async function enhanceArticleContent() {
   if (!detail.value || !renderedHtml.value) return
   await nextTick()
 
-  // Lazy-load legacy renderers used by old page.
-  await Promise.all([loadScriptOnce('/js/highlight.min.js'), loadScriptOnce('/js/katex.min.js'), loadScriptOnce('/js/auto-render.min.js')])
+  // Load math renderer in strict order to avoid auto-render loading before katex.
+  await loadScriptOnce('/js/katex.min.js')
+  await loadScriptOnce('/js/auto-render.min.js')
+  await loadScriptOnce('/js/highlight.min.js')
 
   const markdownContainer = markdownContainerRef.value
   if (!markdownContainer) return
