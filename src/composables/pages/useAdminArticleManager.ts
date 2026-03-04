@@ -7,6 +7,7 @@ import { getCategoryTree } from '@/services/api/article'
 import type { AdminArticleOrderingDirection, AdminArticleOrderingField } from '@/services/api/adminArticle'
 import { useAdminArticleStore } from '@/stores/modules/adminArticle'
 import type { AdminArticlePayload, ArticleStatus, CategoryItem } from '@/types/article'
+import { ARTICLE_STATUS_OPTIONS, isArticleStatus } from '@/utils/articleStatus'
 import { flattenCategoryTreeToOptions } from '@/utils/article'
 
 const FIXED_PAGE_SIZE = 15
@@ -53,11 +54,7 @@ export function useAdminArticleManager() {
   const editingFormValue = ref<Partial<AdminArticlePayload> | null>(null)
   let keywordSearchTimer: ReturnType<typeof setTimeout> | null = null
 
-  const statusOptions: Array<{ label: string; value: ArticleStatus }> = [
-    { label: '草稿', value: 'draft' },
-    { label: '已发布', value: 'published' },
-    { label: '已归档', value: 'archived' },
-  ]
+  const statusOptions = ARTICLE_STATUS_OPTIONS
   const orderingValue = computed<`${'' | '-'}${AdminArticleOrderingField}`>(() => {
     const prefix = orderingDirection.value === 'desc' ? '-' : ''
     return `${prefix}${orderingField.value}` as `${'' | '-'}${AdminArticleOrderingField}`
@@ -87,7 +84,7 @@ export function useAdminArticleManager() {
     const currentPage = Number(route.query.page || 1)
 
     keyword.value = typeof q === 'string' ? q : ''
-    if (status === 'draft' || status === 'published' || status === 'archived') {
+    if (isArticleStatus(status)) {
       statusFilter.value = status
     } else {
       statusFilter.value = undefined

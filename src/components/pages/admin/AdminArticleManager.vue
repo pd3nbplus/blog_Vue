@@ -7,6 +7,7 @@ import AdminArticleEditorPanel from '@/components/pages/admin/components/AdminAr
 import { useAdminArticleManager } from '@/composables/pages/useAdminArticleManager'
 import type { AdminArticleOrderingField } from '@/services/api/adminArticle'
 import type { ArticleItem } from '@/types/article'
+import { getArticleStatusLabel } from '@/utils/articleStatus'
 import { resolveTempAsset } from '@/utils/assets'
 
 const {
@@ -78,9 +79,7 @@ function getCoverSrc(path?: string | null): string {
 }
 
 function statusLabel(status: ArticleItem['status']): string {
-  if (status === 'draft') return '草稿'
-  if (status === 'published') return '已发布'
-  return '已归档'
+  return getArticleStatusLabel(status)
 }
 
 function statusColor(status: ArticleItem['status']): string {

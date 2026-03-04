@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { useArticleDetailPage } from '@/composables/pages/useArticleDetailPage'
 import { BACKEND_ORIGIN, normalizeRelativePath } from '@/utils/assets'
+import { getArticleStatusLabel } from '@/utils/articleStatus'
 import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
 import { renderMarkdownContent } from '@/utils/markdown'
 
@@ -23,12 +24,6 @@ const renderedHtml = ref('')
 const tocHtml = ref('')
 const markdownContainerRef = ref<HTMLElement | null>(null)
 const HTML_IMAGE_SRC_PATTERN = /(<img\b[^>]*?\bsrc=["'])([^"']+)(["'][^>]*>)/gi
-
-const ARTICLE_STATUS_LABELS: Record<string, string> = {
-  published: '已发布',
-  draft: '草稿',
-  archived: '已归档',
-}
 
 function formatDateTime(input?: string | null, mode: 'datetime' | 'date' = 'datetime'): string {
   if (!input) return '-'
@@ -65,7 +60,7 @@ const articleMetadata = computed(() => {
     { label: '阅读量', value: String(detail.value.view_count ?? 0) },
     { label: '字数', value: `${wordCount.value}` },
     { label: '预估阅读', value: `${estimatedReadMinutes.value} 分钟` },
-    { label: '状态', value: ARTICLE_STATUS_LABELS[detail.value.status] || detail.value.status || '-' },
+    { label: '状态', value: getArticleStatusLabel(detail.value.status) },
   ]
   if (detail.value.is_pinned) {
     meta.push({ label: '置顶', value: '是' })

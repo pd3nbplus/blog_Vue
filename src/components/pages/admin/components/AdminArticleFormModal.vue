@@ -11,7 +11,8 @@ import {
   uploadAdminArticleCover,
   uploadAdminArticleMarkdown,
 } from '@/services/api/adminArticle'
-import type { AdminArticlePayload } from '@/types/article'
+import type { AdminArticlePayload, ArticleStatus } from '@/types/article'
+import { ARTICLE_STATUS_OPTIONS } from '@/utils/articleStatus'
 import type { CategoryOption } from '@/utils/article'
 import { resolveTempAsset } from '@/utils/assets'
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
@@ -24,7 +25,7 @@ interface AdminArticleFormInput {
   source_markdown_path: string
   cover_path: string
   category: number | null
-  status: 'draft' | 'published' | 'archived'
+  status: ArticleStatus
   is_pinned: boolean
 }
 
@@ -58,11 +59,7 @@ const formState = reactive<AdminArticleFormInput>({
   is_pinned: false,
 })
 
-const statusOptions = [
-  { label: '草稿', value: 'draft' },
-  { label: '已发布', value: 'published' },
-  { label: '已归档', value: 'archived' },
-]
+const statusOptions = ARTICLE_STATUS_OPTIONS
 
 const rules = computed<Record<string, Rule[]>>(() => ({
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],

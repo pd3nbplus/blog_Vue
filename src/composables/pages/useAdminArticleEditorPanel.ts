@@ -8,7 +8,8 @@ import {
   uploadAdminArticleCover,
 } from '@/services/api/adminArticle'
 import { useAdminArticlePreview } from '@/composables/pages/useAdminArticlePreview'
-import type { AdminArticlePayload, CategoryItem } from '@/types/article'
+import type { AdminArticlePayload, ArticleStatus, CategoryItem } from '@/types/article'
+import { ARTICLE_STATUS_OPTIONS } from '@/utils/articleStatus'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
 import { matchLocalImageRefs, mergeLocalImageFiles } from '@/utils/localImageMapping'
 import { extractLocalImageRefs } from '@/utils/markdownLocalImage'
@@ -20,7 +21,7 @@ interface AdminArticleFormInput {
   source_markdown_path: string
   cover_path: string
   category: number | null
-  status: 'draft' | 'published' | 'archived'
+  status: ArticleStatus
   is_pinned: boolean
 }
 interface CategoryTreeSelectNode {
@@ -51,11 +52,7 @@ export function useAdminArticleEditorPanel(
     status: 'draft',
     is_pinned: false,
   })
-  const statusOptions = [
-    { label: '草稿', value: 'draft' },
-    { label: '已发布', value: 'published' },
-    { label: '已归档', value: 'archived' },
-  ]
+  const statusOptions = ARTICLE_STATUS_OPTIONS
   const rules = computed<Record<string, Rule[]>>(() => ({
     title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
     slug: [{ required: true, message: '请输入 slug', trigger: 'blur' }],
