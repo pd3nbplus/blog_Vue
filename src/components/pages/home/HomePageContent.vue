@@ -295,14 +295,14 @@ onBeforeUnmount(() => {
 .pinned-collections {
   margin-bottom: 12px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, #145ca8 38%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
   padding: 12px;
   background:
-    radial-gradient(circle at 0% 0%, rgb(20 92 168 / 24%), transparent 54%),
-    radial-gradient(circle at 100% 0%, rgb(16 185 129 / 18%), transparent 52%),
-    linear-gradient(135deg, rgb(255 255 255 / 88%), rgb(245 250 255 / 90%)),
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 56%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 52%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--surface-2)), var(--surface)),
     var(--surface);
-  box-shadow: 0 14px 32px rgb(17 24 39 / 14%);
+  box-shadow: var(--shadow-soft);
 }
 
 .pinned-collections-header {
@@ -320,8 +320,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, #145ca8 35%, var(--border));
-  background: color-mix(in srgb, #145ca8 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
   color: var(--primary);
   font-family: var(--font-main);
   font-size: 0.82rem;
@@ -345,9 +345,9 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   gap: 10px;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, #145ca8 24%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
   padding: 10px;
-  background: color-mix(in srgb, var(--surface) 95%, #f0f7ff);
+  background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -358,8 +358,8 @@ onBeforeUnmount(() => {
 
 .collection-card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, #145ca8 44%, var(--border));
-  box-shadow: 0 10px 22px rgb(20 92 168 / 18%);
+  border-color: color-mix(in srgb, var(--primary) 46%, var(--border));
+  box-shadow: var(--tile-hover-shadow);
 }
 
 .collection-cover {
@@ -385,9 +385,9 @@ onBeforeUnmount(() => {
   margin: 0;
   display: inline-flex;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, #145ca8 30%, var(--border));
-  background: color-mix(in srgb, #145ca8 10%, var(--surface));
-  color: #145ca8;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
 .collection-entry {
   margin-top: 4px;
   display: inline-flex;
-  color: #145ca8;
+  color: var(--primary);
   font-size: 0.78rem;
   font-weight: 700;
 }
