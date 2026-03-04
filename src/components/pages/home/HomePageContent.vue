@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import AppImage from '@/components/common/AppImage.vue'
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
 import { useFeedback } from '@/composables/useFeedback'
 import { useHomePage } from '@/composables/pages/useHomePage'
 import { getHomeRecommendations } from '@/services/article'
-import type { ArticleItem, CategoryItem } from '@/types/article'
+import type { ArticleItem, CategoryItem, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 
 const { homeSummary, loading } = useHomePage()
@@ -23,6 +24,7 @@ const recommendationScrollPageSize = 8
 const recommendationScrollThreshold = 180
 
 const latestArticles = computed(() => (homeSummary.value?.latest_articles || []).slice(0, latestArticlesCount))
+const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.pinned_collections || []).slice(0, 3))
 const latestUpdates = computed(() => (homeSummary.value?.latest_articles || []).slice(0, 5))
 
 function isOpened(id: number): boolean {
@@ -58,6 +60,11 @@ function formatDate(input?: string | null): string {
 function formatDateTime(input?: string | null): string {
   if (!input) return ''
   return input.slice(0, 19).replace('T', ' ')
+}
+
+function formatCount(value?: number | null): string {
+  const num = Number(value || 0)
+  return num.toLocaleString('zh-CN')
 }
 
 function articleCategory(article: ArticleItem): string {
@@ -182,6 +189,30 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="column middle-column">
+        <div v-if="pinnedCollections.length" class="pinned-collections app-surface-card">
+          <h2>置顶合集</h2>
+          <ul>
+            <li v-for="collection in pinnedCollections" :key="collection.id">
+              <div class="collection-card">
+                <AppImage
+                  :src="getCoverSrc(collection.cover_path)"
+                  :alt="collection.name"
+                  class="collection-cover"
+                  fallback-src="/img/hero-image.jpg"
+                />
+                <div class="collection-main">
+                  <h3>{{ collection.name }}</h3>
+                  <p class="collection-summary">{{ collection.summary || '暂无合集概述' }}</p>
+                  <div class="collection-stats">
+                    <span>文章 {{ formatCount(collection.article_count) }}</span>
+                    <span>浏览 {{ formatCount(collection.total_views) }}</span>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
         <div class="popular-articles">
           <h2>随机推荐文章</h2>
           <ul>
@@ -250,5 +281,65 @@ onBeforeUnmount(() => {
   color: #666;
   text-align: center;
   margin: 12px 0 6px;
+}
+
+.pinned-collections {
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #145ca8 30%, var(--border));
+  padding: 12px;
+  background: color-mix(in srgb, #145ca8 8%, var(--surface));
+}
+
+.pinned-collections h2 {
+  margin: 0 0 10px;
+}
+
+.pinned-collections ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.collection-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.collection-cover {
+  width: 68px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.collection-main {
+  min-width: 0;
+}
+
+.collection-main h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.collection-summary {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.collection-stats {
+  display: flex;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 </style>
