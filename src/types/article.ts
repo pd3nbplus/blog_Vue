@@ -87,6 +87,11 @@ export interface HomeSummary {
     category_count: number
     collection_count?: number
   }
+  site_profile?: {
+    display_name: string
+    home_avatar_path: string
+    home_hero_path: string
+  }
   latest_articles: ArticleItem[]
   popular_articles: ArticleItem[]
   pinned_collections: CollectionItem[]

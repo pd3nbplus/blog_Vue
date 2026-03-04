@@ -26,6 +26,10 @@ const recommendationScrollThreshold = 180
 const latestArticles = computed(() => (homeSummary.value?.latest_articles || []).slice(0, latestArticlesCount))
 const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.pinned_collections || []).slice(0, 3))
 const latestUpdates = computed(() => (homeSummary.value?.latest_articles || []).slice(0, 5))
+const siteProfile = computed(() => homeSummary.value?.site_profile)
+const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
+const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
+const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/hero-image.jpg')
 
 function isOpened(id: number): boolean {
   return openedCategories.value.includes(id)
@@ -148,16 +152,16 @@ onBeforeUnmount(() => {
           <h2>站着不动，永远是观众！</h2>
         </div>
       </div>
-      <img src="/img/hero-image.jpg" alt="Hero Image" class="hero-image" />
+      <AppImage :src="homeHeroSrc" alt="Hero Image" class="hero-image" fallback-src="/img/hero-image.jpg" />
     </div>
 
     <div class="main-content">
       <div class="column left-column">
         <div class="personal-intro">
           <div class="profile-image">
-            <img src="/img/profile-image.png" alt="Profile Image" />
+            <AppImage :src="homeAvatarSrc" alt="Profile Image" fallback-src="/img/profile-image.png" />
           </div>
-          <h2>pdnbplus</h2>
+          <h2>{{ homeDisplayName }}</h2>
           <div class="stats">
             <div>
               <span>文章</span>
