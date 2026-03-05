@@ -37,7 +37,10 @@ interface CategoryTreeSelectNode {
 export interface AdminArticleEditorPanelProps {
   initialValue?: Partial<AdminArticlePayload> | null
   categoryTree: CategoryItem[]
+  editing?: boolean
 }
+
+const CREATE_ARTICLE_DRAFT_STORAGE_KEY = 'blog_vue_admin_article_create_draft_v1'
 // Keep rich inferred return types for template consumers without duplicating a massive interface.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useAdminArticleEditorPanel(
@@ -78,6 +81,100 @@ export function useAdminArticleEditorPanel(
   const previewScrollRef = ref<HTMLElement | null>(null)
   const previewContainerRef = ref<HTMLElement | null>(null)
   const expandedParentCategoryId = ref<number | null>(null)
+  let draftPersistTimer: ReturnType<typeof setTimeout> | null = null
+
+  function clearDraftPersistTimer(): void {
+    if (!draftPersistTimer) return
+    clearTimeout(draftPersistTimer)
+    draftPersistTimer = null
+  }
+
+  function getFormSnapshot(): AdminArticleFormInput {
+    return {
+      title: formState.title,
+      slug: formState.slug,
+      summary: formState.summary,
+      markdown_content: formState.markdown_content,
+      source_markdown_path: formState.source_markdown_path,
+      cover_path: formState.cover_path,
+      category: formState.category,
+      status: formState.status,
+      is_pinned: formState.is_pinned,
+    }
+  }
+
+  function hasDraftContent(snapshot: AdminArticleFormInput): boolean {
+    if (snapshot.title.trim()) return true
+    if (snapshot.slug.trim()) return true
+    if (snapshot.summary.trim()) return true
+    if (snapshot.markdown_content.trim()) return true
+    if (snapshot.source_markdown_path.trim()) return true
+    if (snapshot.cover_path.trim()) return true
+    if (snapshot.category !== null) return true
+    if (snapshot.status !== 'draft') return true
+    return snapshot.is_pinned
+  }
+
+  function persistCreateDraft(): void {
+    if (props.editing) return
+    if (typeof window === 'undefined') return
+    const snapshot = getFormSnapshot()
+    if (!hasDraftContent(snapshot)) {
+      window.localStorage.removeItem(CREATE_ARTICLE_DRAFT_STORAGE_KEY)
+      return
+    }
+    try {
+      window.localStorage.setItem(
+        CREATE_ARTICLE_DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          savedAt: new Date().toISOString(),
+          form: snapshot,
+        }),
+      )
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }
+
+  function schedulePersistCreateDraft(): void {
+    if (props.editing) return
+    clearDraftPersistTimer()
+    draftPersistTimer = setTimeout(() => {
+      persistCreateDraft()
+      draftPersistTimer = null
+    }, 220)
+  }
+
+  function restoreCreateDraft(): void {
+    if (props.editing) return
+    if (typeof window === 'undefined') return
+    const raw = window.localStorage.getItem(CREATE_ARTICLE_DRAFT_STORAGE_KEY)
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw) as {
+        version?: number
+        form?: Partial<AdminArticleFormInput>
+      }
+      const form = parsed?.form
+      if (!form || typeof form !== 'object') return
+      formState.title = typeof form.title === 'string' ? form.title : ''
+      formState.slug = typeof form.slug === 'string' ? form.slug : ''
+      formState.summary = typeof form.summary === 'string' ? form.summary : ''
+      formState.markdown_content = typeof form.markdown_content === 'string' ? form.markdown_content : ''
+      formState.source_markdown_path = typeof form.source_markdown_path === 'string' ? form.source_markdown_path : ''
+      formState.cover_path = typeof form.cover_path === 'string' ? form.cover_path : ''
+      formState.category = typeof form.category === 'number' ? form.category : null
+      formState.status =
+        form.status === 'draft' || form.status === 'published' || form.status === 'archived'
+          ? form.status
+          : 'draft'
+      formState.is_pinned = form.is_pinned === true
+    } catch {
+      window.localStorage.removeItem(CREATE_ARTICLE_DRAFT_STORAGE_KEY)
+    }
+  }
+
   function resetForm(): void {
     formState.title = ''
     formState.slug = ''
@@ -91,7 +188,10 @@ export function useAdminArticleEditorPanel(
   }
   function syncFormFromInitialValue(): void {
     resetForm()
-    if (!props.initialValue) return
+    if (!props.initialValue) {
+      restoreCreateDraft()
+      return
+    }
     formState.title = props.initialValue.title ?? ''
     formState.slug = props.initialValue.slug ?? ''
     formState.summary = props.initialValue.summary ?? ''
@@ -409,7 +509,26 @@ export function useAdminArticleEditorPanel(
     },
     { immediate: true },
   )
+  watch(
+    () => [
+      props.editing,
+      formState.title,
+      formState.slug,
+      formState.summary,
+      formState.markdown_content,
+      formState.source_markdown_path,
+      formState.cover_path,
+      formState.category,
+      formState.status,
+      formState.is_pinned,
+    ],
+    () => {
+      schedulePersistCreateDraft()
+    },
+  )
   onBeforeUnmount(() => {
+    clearDraftPersistTimer()
+    persistCreateDraft()
     resetAssetSelectionState()
   })
   return {
