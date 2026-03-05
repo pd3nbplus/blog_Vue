@@ -18,13 +18,17 @@ const recommendationPage = ref(1)
 const recommendationSeed = ref<number | undefined>(undefined)
 const recommendationHasMore = ref(true)
 const recommendationLoading = ref(false)
+const recommendationInitialized = ref(false)
 const latestUpdates = ref<ArticleItem[]>([])
+const latestUpdatesLoaded = ref(false)
 const latestArticlesCount = 10
 const latestUpdatesCount = 5
 const latestUpdatesPageSize = 100
 const recommendationInitialPageSize = 12
 const recommendationScrollPageSize = 8
 const recommendationScrollThreshold = 180
+let nonCriticalLoadTimer: number | null = null
+let nonCriticalIdleId: number | null = null
 
 const latestArticles = computed(() =>
   [...(homeSummary.value?.latest_articles || [])]
@@ -39,7 +43,7 @@ const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.p
 const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
-const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/hero-image.jpg')
+const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/background.jpg')
 
 function isOpened(id: number): boolean {
   return openedCategories.value.includes(id)
@@ -53,13 +57,13 @@ function toggleCategory(id: number): void {
   openedCategories.value.push(id)
 }
 
-function toggleLike() {
+function toggleLike(): void {
   isLiked.value = !isLiked.value
 }
 
 function getCoverSrc(path?: string | null): string {
   const resolved = resolveTempAsset(path)
-  return resolved || '/img/hero-image.jpg'
+  return resolved || '/img/background.jpg'
 }
 
 function getCategoryIcon(path?: string | null): string {
@@ -110,13 +114,14 @@ function isNearBottom(): boolean {
 }
 
 async function loadRecommendations(reset = false): Promise<void> {
+  const shouldReset = reset || !recommendationInitialized.value
   if (recommendationLoading.value) return
-  if (!reset && !recommendationHasMore.value) return
+  if (!shouldReset && !recommendationHasMore.value) return
 
   recommendationLoading.value = true
   try {
-    const targetPage = reset ? 1 : recommendationPage.value
-    const pageSize = reset ? recommendationInitialPageSize : recommendationScrollPageSize
+    const targetPage = shouldReset ? 1 : recommendationPage.value
+    const pageSize = shouldReset ? recommendationInitialPageSize : recommendationScrollPageSize
     const res = await getHomeRecommendations({
       page: targetPage,
       page_size: pageSize,
@@ -126,7 +131,7 @@ async function loadRecommendations(reset = false): Promise<void> {
     recommendationSeed.value = pageData.seed
     recommendationHasMore.value = pageData.has_more
 
-    if (reset) {
+    if (shouldReset) {
       recommendedArticles.value = pageData.results
     } else {
       const exists = new Set(recommendedArticles.value.map((item) => item.id))
@@ -137,6 +142,7 @@ async function loadRecommendations(reset = false): Promise<void> {
       }
     }
     recommendationPage.value = pageData.page + 1
+    recommendationInitialized.value = true
   } catch (error) {
     feedback.error(error, '加载推荐文章失败')
   } finally {
@@ -151,6 +157,7 @@ function byPublishedAtDesc(a: ArticleItem, b: ArticleItem): number {
 }
 
 async function loadLatestUpdates(): Promise<void> {
+  if (latestUpdatesLoaded.value) return
   const pinnedArticles: ArticleItem[] = []
   const nonPinnedArticles: ArticleItem[] = []
   let page = 1
@@ -182,10 +189,33 @@ async function loadLatestUpdates(): Promise<void> {
     }
 
     latestUpdates.value = [...pinnedArticles, ...nonPinnedArticles].sort(byPublishedAtDesc).slice(0, latestUpdatesCount)
+    latestUpdatesLoaded.value = true
   } catch (error) {
     latestUpdates.value = []
     feedback.error(error, '加载最新动态失败')
   }
+}
+
+type IdleWindow = Window & {
+  requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
+  cancelIdleCallback?: (handle: number) => void
+}
+
+function queueNonCriticalLoads(): void {
+  const triggerLoads = (): void => {
+    void loadLatestUpdates()
+    void loadRecommendations(true)
+  }
+
+  const win = window as IdleWindow
+  if (typeof win.requestIdleCallback === 'function') {
+    nonCriticalIdleId = win.requestIdleCallback(triggerLoads, { timeout: 1500 })
+    return
+  }
+
+  nonCriticalLoadTimer = window.setTimeout(() => {
+    triggerLoads()
+  }, 700)
 }
 
 function handleScroll(): void {
@@ -194,12 +224,20 @@ function handleScroll(): void {
 }
 
 onMounted(() => {
-  void loadLatestUpdates()
-  void loadRecommendations(true)
+  queueNonCriticalLoads()
   window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onBeforeUnmount(() => {
+  if (nonCriticalLoadTimer) {
+    window.clearTimeout(nonCriticalLoadTimer)
+    nonCriticalLoadTimer = null
+  }
+  const win = window as IdleWindow
+  if (nonCriticalIdleId !== null && typeof win.cancelIdleCallback === 'function') {
+    win.cancelIdleCallback(nonCriticalIdleId)
+    nonCriticalIdleId = null
+  }
   window.removeEventListener('scroll', handleScroll)
 })
 </script>
@@ -216,7 +254,15 @@ onBeforeUnmount(() => {
           <h2>站着不动，永远是观众！</h2>
         </div>
       </div>
-      <AppImage :src="homeHeroSrc" alt="Hero Image" class="hero-image" fallback-src="/img/hero-image.jpg" />
+      <AppImage
+        :src="homeHeroSrc"
+        alt="Hero Image"
+        class="hero-image"
+        fallback-src="/img/background.jpg"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
     </div>
 
     <div class="main-content home-main-content">
@@ -269,7 +315,7 @@ onBeforeUnmount(() => {
                   :src="getCoverSrc(collection.cover_path)"
                   :alt="collection.name"
                   class="collection-cover"
-                  fallback-src="/img/hero-image.jpg"
+                  fallback-src="/img/background.jpg"
                 />
                 <div class="collection-main">
                   <p class="collection-badge">Collection</p>

@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { FormInstance } from 'ant-design-vue'
+import type { SelectValue } from 'ant-design-vue/es/select'
 
 import AppImage from '@/components/common/AppImage.vue'
 import { useFeedback } from '@/composables/useFeedback'
@@ -187,11 +188,16 @@ function handleReset() {
   void fetchCollections(1)
 }
 
-function handlePinnedFilterChange(value: 'all' | 'pinned' | 'normal') {
-  if (value === 'all') {
+function handlePinnedFilterChange(value: SelectValue): void {
+  const normalized = typeof value === 'string' ? value : undefined
+  if (normalized === 'all' || normalized === undefined) {
     pinnedFilter.value = undefined
+  } else if (normalized === 'pinned') {
+    pinnedFilter.value = true
+  } else if (normalized === 'normal') {
+    pinnedFilter.value = false
   } else {
-    pinnedFilter.value = value === 'pinned'
+    pinnedFilter.value = undefined
   }
 }
 

@@ -24,7 +24,7 @@ interface AdminArticleFormInput {
   markdown_content: string
   source_markdown_path: string
   cover_path: string
-  category: number | null
+  category?: number
   status: ArticleStatus
   is_pinned: boolean
 }
@@ -54,7 +54,7 @@ const formState = reactive<AdminArticleFormInput>({
   markdown_content: '',
   source_markdown_path: '',
   cover_path: '',
-  category: null,
+  category: undefined,
   status: 'draft',
   is_pinned: false,
 })
@@ -74,7 +74,7 @@ function resetForm() {
   formState.markdown_content = ''
   formState.source_markdown_path = ''
   formState.cover_path = ''
-  formState.category = null
+  formState.category = undefined
   formState.status = 'draft'
   formState.is_pinned = false
 }
@@ -89,7 +89,7 @@ function syncFormFromInitialValue() {
   formState.markdown_content = props.initialValue.markdown_content ?? ''
   formState.source_markdown_path = props.initialValue.source_markdown_path ?? ''
   formState.cover_path = props.initialValue.cover_path ?? ''
-  formState.category = props.initialValue.category ?? null
+  formState.category = props.initialValue.category ?? undefined
   formState.status = props.initialValue.status ?? 'draft'
   formState.is_pinned = props.initialValue.is_pinned ?? false
 }
@@ -347,7 +347,7 @@ async function handleConfirm() {
     markdown_content: formState.markdown_content,
     source_markdown_path: formState.source_markdown_path.trim(),
     cover_path: formState.cover_path.trim(),
-    category: formState.category,
+    category: formState.category ?? null,
     status: formState.status,
     is_pinned: formState.is_pinned,
   }

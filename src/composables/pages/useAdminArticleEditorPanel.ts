@@ -145,19 +145,14 @@ export function useAdminArticleEditorPanel(
       expandedParentCategoryId.value = null
     }
   }
-  function handleCategoryTreeExpand(
-    _expandedKeys: Array<string | number>,
-    info: {
-      expanded: boolean
-      node?: { value?: string | number; key?: string | number }
-    },
-  ): void {
-    const node = info.node
-    if (!node) return
-    const nodeKey = Number(node.value ?? node.key)
-    if (!Number.isFinite(nodeKey) || nodeKey <= 0) return
-    if (!topLevelCategoryIdSet.value.has(nodeKey)) return
-    expandedParentCategoryId.value = info.expanded ? nodeKey : null
+  function handleCategoryTreeExpand(expandedKeys: Array<string | number>): void {
+    const expandedTopLevelKeys = expandedKeys
+      .map((key) => Number(key))
+      .filter((key) => Number.isFinite(key) && key > 0 && topLevelCategoryIdSet.value.has(key))
+
+    expandedParentCategoryId.value = expandedTopLevelKeys.length
+      ? (expandedTopLevelKeys[expandedTopLevelKeys.length - 1] ?? null)
+      : null
   }
   function extractMarkdownBaseName(filename: string): string {
     const normalized = filename.split('/').pop()?.split('\\').pop() || filename

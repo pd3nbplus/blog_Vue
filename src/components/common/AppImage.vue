@@ -14,6 +14,8 @@ const props = withDefaults(
     noReferrerForRemote?: boolean
     hideOnError?: boolean
     loading?: 'lazy' | 'eager'
+    fetchpriority?: 'high' | 'low' | 'auto'
+    decoding?: 'async' | 'sync' | 'auto'
   }>(),
   {
     src: '',
@@ -24,6 +26,8 @@ const props = withDefaults(
     noReferrerForRemote: true,
     hideOnError: false,
     loading: 'lazy',
+    fetchpriority: 'auto',
+    decoding: 'async',
   },
 )
 
@@ -95,6 +99,8 @@ function handleLoad(event: Event) {
     :src="currentSrc"
     :alt="alt"
     :loading="loading"
+    :fetchpriority="fetchpriority"
+    :decoding="decoding"
     :referrerpolicy="referrerPolicy"
     @error="handleError"
     @load="handleLoad"
