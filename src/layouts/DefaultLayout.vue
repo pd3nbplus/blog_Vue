@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type LocationQueryValue } from 'vue-router'
 import { useTheme, type AppTheme } from '@/composables/useTheme'
 import { getCollectionList } from '@/services/api/article'
 import { useArticleStore } from '@/stores/modules/article'
@@ -34,17 +34,17 @@ const featuredCollectionNavTarget = computed(() => {
 
 const searchText = ref('')
 
-function normalizeQueryValue(value: unknown): string {
+function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined): string {
   return typeof value === 'string' ? value : ''
 }
 
-async function submitSearch() {
+async function submitSearch(): Promise<void> {
   const q = searchText.value.trim()
   if (!q) return
   await router.push({ name: 'query', query: { q } })
 }
 
-function handleThemeChange(event: Event) {
+function handleThemeChange(event: Event): void {
   const select = event.target as HTMLSelectElement
   setTheme(select.value as AppTheme)
 }

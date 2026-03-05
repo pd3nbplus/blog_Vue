@@ -101,19 +101,19 @@ function titleSummary(summary?: string | null): string {
   return `${chars.slice(0, 46).join('')}...`
 }
 
-function handleCreate() {
+function handleCreate(): void {
   void router.push('/admin/create_article/')
 }
 
-function handleEdit(id: number) {
+function handleEdit(id: number): void {
   void router.push(`/admin/create_article/${id}/`)
 }
 
-function handlePreview(id: number) {
+function handlePreview(id: number): void {
   void router.push({ name: 'article-detail', params: { id } })
 }
 
-function handleDelete(id: number) {
+function handleDelete(id: number): void {
   void handleArchive(id)
 }
 
@@ -122,12 +122,19 @@ function showTotal(totalCount: number): string {
 }
 
 type AntSortOrder = 'ascend' | 'descend' | null
+type TableColumnKey = string | number | symbol | undefined
+type TableFilterValue = string | number | boolean
+type TableFiltersPayload = Record<string, ReadonlyArray<TableFilterValue> | null>
+interface TablePaginationPayload {
+  current?: number
+  pageSize?: number
+}
 interface TableSorterPayload {
-  columnKey?: unknown
+  columnKey?: TableColumnKey
   order?: AntSortOrder
 }
 
-function toOrderingField(columnKey: unknown): AdminArticleOrderingField | undefined {
+function toOrderingField(columnKey: TableColumnKey): AdminArticleOrderingField | undefined {
   if (typeof columnKey !== 'string') return undefined
   if (columnKey === 'updated_at') return 'updated_at'
   if (columnKey === 'created_at') return 'created_at'
@@ -139,8 +146,8 @@ function toOrderingField(columnKey: unknown): AdminArticleOrderingField | undefi
 }
 
 function handleTableChange(
-  _pagination: unknown,
-  _filters: unknown,
+  _pagination: TablePaginationPayload,
+  _filters: TableFiltersPayload,
   sorter: TableSorterPayload | TableSorterPayload[],
 ): void {
   const currentSorter = Array.isArray(sorter) ? sorter[0] : sorter

@@ -7,7 +7,10 @@ import {
   resolveAdminArticleLocalImages,
   uploadAdminArticleCover,
 } from '@/services/api/adminArticle'
-import { useAdminArticlePreview } from '@/composables/pages/useAdminArticlePreview'
+import {
+  useAdminArticlePreview,
+  type MarkdownTextareaRefInstance,
+} from '@/composables/pages/useAdminArticlePreview'
 import type { AdminArticlePayload, ArticleStatus, CategoryItem } from '@/types/article'
 import { ARTICLE_STATUS_OPTIONS } from '@/utils/articleStatus'
 import { BACKEND_ORIGIN, resolveTempAsset } from '@/utils/assets'
@@ -71,7 +74,7 @@ export function useAdminArticleEditorPanel(
   const selectedCoverFile = ref<File | null>(null)
   const coverUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>([])
   const localCoverPreviewUrl = ref('')
-  const markdownTextareaRef = ref<unknown>(null)
+  const markdownTextareaRef = ref<MarkdownTextareaRefInstance | null>(null)
   const previewScrollRef = ref<HTMLElement | null>(null)
   const previewContainerRef = ref<HTMLElement | null>(null)
   const expandedParentCategoryId = ref<number | null>(null)

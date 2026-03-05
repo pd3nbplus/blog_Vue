@@ -7,7 +7,12 @@ import { useFeedback } from '@/composables/useFeedback'
 import { getArticleList, getCollectionDetail, getCollectionList } from '@/services/api/article'
 import type { ArticleItem, CollectionItem } from '@/types/article'
 
-function parsePositiveNumber(value: unknown): number | undefined {
+type NumberLikeInput = string | number | null | undefined | string[] | Array<string | null>
+
+function parsePositiveNumber(value: NumberLikeInput): number | undefined {
+  if (Array.isArray(value)) {
+    return parsePositiveNumber(value[0])
+  }
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
   if (typeof value === 'string' && value.trim()) {
     const parsed = Number(value)

@@ -1,4 +1,4 @@
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = Record<string, never>> {
   code: number
   message: string
   data: T

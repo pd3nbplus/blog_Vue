@@ -27,11 +27,18 @@ export default defineConfigWithVueTs(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': [
-        'warn',
+        'error',
         {
           allowExpressions: true,
           allowTypedFunctionExpressions: true,
           allowHigherOrderFunctions: true,
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSUnknownKeyword',
+          message: '禁止使用 unknown，请改为明确类型定义。',
         },
       ],
       'vue/component-api-style': ['error', ['script-setup', 'composition']],
@@ -43,6 +50,13 @@ export default defineConfigWithVueTs(
     files: ['**/*.vue'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSUnknownKeyword',
+          message: '禁止使用 unknown，请改为明确类型定义。',
+        },
+      ],
       'vue/component-api-style': ['error', ['script-setup', 'composition']],
       'vue/require-explicit-emits': 'error',
     },

@@ -81,17 +81,21 @@ export function useAdminArticleManager() {
     const status = route.query.status
     const category = route.query.category
     const ordering = route.query.ordering
-    const currentPage = Number(route.query.page || 1)
+    const currentPageRaw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page
+    const currentPage = Number(currentPageRaw || 1)
 
     keyword.value = typeof q === 'string' ? q : ''
-    if (isArticleStatus(status)) {
-      statusFilter.value = status
+    const statusValue = Array.isArray(status) ? status[0] : status
+    if (isArticleStatus(statusValue)) {
+      statusFilter.value = statusValue
     } else {
       statusFilter.value = undefined
     }
-    const categoryId = Number(category)
+    const categoryValue = Array.isArray(category) ? category[0] : category
+    const categoryId = Number(categoryValue)
     categoryFilter.value = Number.isNaN(categoryId) || categoryId <= 0 ? undefined : categoryId
-    const { field, direction } = parseOrdering(typeof ordering === 'string' ? ordering : undefined)
+    const orderingValue = Array.isArray(ordering) ? ordering[0] : ordering
+    const { field, direction } = parseOrdering(typeof orderingValue === 'string' ? orderingValue : undefined)
     orderingField.value = field
     orderingDirection.value = direction
     page.value = Number.isNaN(currentPage) ? 1 : Math.max(1, currentPage)

@@ -11,11 +11,40 @@ const http = axios.create({
   timeout: 10000,
 })
 
-export function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiResponse> | undefined
-  const responseMessage = axiosError?.response?.data?.message
-  if (responseMessage) return responseMessage
-  if (axiosError?.message) return axiosError.message
+interface ApiErrorLike {
+  message?: string
+  response?: {
+    data?: { message?: string } | string
+  }
+  isAxiosError?: boolean
+}
+
+export type ApiErrorInput = AxiosError<ApiResponse> | ApiErrorLike | Error | string | null | undefined
+
+function isApiErrorLike(value: object): value is ApiErrorLike {
+  return 'message' in value || 'response' in value || 'isAxiosError' in value
+}
+
+export function getApiErrorMessage<TError>(error: TError): string {
+  if (!error) return ''
+  if (typeof error === 'string') return error
+  if (axios.isAxiosError<ApiResponse>(error)) {
+    const responseMessage = error.response?.data?.message
+    if (responseMessage) return responseMessage
+    return error.message || ''
+  }
+  if (error instanceof Error) {
+    return error.message || ''
+  }
+  if (typeof error === 'object' && error && isApiErrorLike(error)) {
+    if (typeof error.response?.data === 'string') {
+      return error.response.data
+    }
+    if (error.response?.data?.message) {
+      return error.response.data.message
+    }
+    return error.message || ''
+  }
   return ''
 }
 

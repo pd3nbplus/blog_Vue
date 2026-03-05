@@ -17,9 +17,14 @@ type RenderMathFn = (
 
 interface UseAdminArticlePreviewOptions {
   markdownContent: Readonly<Ref<string>>
-  markdownTextareaRef: Ref<unknown>
+  markdownTextareaRef: Ref<MarkdownTextareaRefInstance | null>
   previewScrollRef: Ref<HTMLElement | null>
   previewContainerRef: Ref<HTMLElement | null>
+}
+
+export interface MarkdownTextareaRefInstance {
+  resizableTextArea?: { textArea?: HTMLTextAreaElement | null }
+  $el?: HTMLElement
 }
 
 // Keep inferred return object types for composable consumers without duplicate type declarations.
@@ -118,12 +123,7 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
   }
 
   function resolveEditorTextareaElement(): HTMLTextAreaElement | null {
-    const instance = options.markdownTextareaRef.value as
-      | {
-          resizableTextArea?: { textArea?: HTMLTextAreaElement | null }
-          $el?: HTMLElement
-        }
-      | null
+    const instance = options.markdownTextareaRef.value
     if (!instance) return null
     if (instance.resizableTextArea?.textArea) {
       return instance.resizableTextArea.textArea

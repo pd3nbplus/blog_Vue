@@ -25,6 +25,8 @@ interface UseArticleListPageResult {
   handlePageSizeChange: (_: number, size: number) => void
 }
 
+type NumberLikeInput = string | number | null | undefined | string[] | Array<string | null>
+
 export function useArticleListPage(): UseArticleListPageResult {
   const articleStore = useArticleStore()
   const feedback = useFeedback()
@@ -39,7 +41,10 @@ export function useArticleListPage(): UseArticleListPageResult {
   const isQueryRoute = computed(() => routeName.value === 'query')
   const DEFAULT_PARENT_CATEGORY_NAME = '后端数据库'
 
-  function parsePositiveNumber(value: unknown): number | undefined {
+  function parsePositiveNumber(value: NumberLikeInput): number | undefined {
+    if (Array.isArray(value)) {
+      return parsePositiveNumber(value[0])
+    }
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
     if (typeof value === 'string' && value.trim()) {
       const parsed = Number(value)

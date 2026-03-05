@@ -12,7 +12,7 @@ export const ARTICLE_STATUS_OPTIONS: Array<{ label: string; value: ArticleStatus
   { label: ARTICLE_STATUS_LABELS.archived, value: 'archived' },
 ]
 
-export function isArticleStatus(value: unknown): value is ArticleStatus {
+export function isArticleStatus(value: string | null | undefined): value is ArticleStatus {
   return value === 'draft' || value === 'published' || value === 'archived'
 }
 
