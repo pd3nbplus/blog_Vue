@@ -156,6 +156,12 @@
   border: 1px solid var(--border);
 }
 
+.cover-upload-hint {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .selected-files {
   margin-top: 8px;
   color: var(--muted);

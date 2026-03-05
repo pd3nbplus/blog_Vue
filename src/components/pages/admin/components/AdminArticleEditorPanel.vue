@@ -118,20 +118,25 @@ const {
             <a-input v-model:value="formState.source_markdown_path" placeholder="例如：深度学习/NLP/xxx.md" />
           </a-form-item>
           <a-form-item label="封面路径" class="asset-item">
-            <a-input v-model:value="formState.cover_path" placeholder="可填本地路径或外链 URL" />
-            <div class="upload-line">
-              <a-upload
-                :file-list="coverUploadList"
-                :before-upload="handleCoverBeforeUpload"
-                :max-count="1"
-                accept="image/*"
-                @remove="handleCoverRemove"
-              >
-                <a-button size="small" :loading="coverUploading">
-                  <UploadOutlined />
-                  选择封面
-                </a-button>
-              </a-upload>
+            <a-input v-model:value="formState.cover_path" placeholder="可填本地路径或外链 URL">
+              <template #addonAfter>
+                <a-upload
+                  :show-upload-list="false"
+                  :file-list="coverUploadList"
+                  :before-upload="handleCoverBeforeUpload"
+                  :max-count="1"
+                  accept="image/*"
+                  @remove="handleCoverRemove"
+                >
+                  <a-button type="link" size="small" :loading="coverUploading">
+                    <UploadOutlined />
+                    上传图片
+                  </a-button>
+                </a-upload>
+              </template>
+            </a-input>
+            <div v-if="coverUploadList.length" class="cover-upload-hint">
+              已选择：{{ coverUploadList[0]?.name }}
             </div>
             <AppImage v-if="coverPreview" :src="coverPreview" alt="cover preview" class="cover-preview" fallback-src="/img/hero-image.jpg" />
           </a-form-item>
