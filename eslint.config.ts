@@ -17,9 +17,9 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/public/**/*.min.js']),
 
-  ...pluginVue.configs['flat/essential'],
+  ...pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
   {
     name: 'app/strict-rules',
@@ -49,7 +49,15 @@ export default defineConfigWithVueTs(
     name: 'app/vue-sfc-rules',
     files: ['**/*.vue'],
     rules: {
-      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true,
+        },
+      ],
+      'vue/no-v-html': 'off',
       'no-restricted-syntax': [
         'error',
         {

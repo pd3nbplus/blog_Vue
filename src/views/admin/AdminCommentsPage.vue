@@ -27,7 +27,7 @@ function rowIndex(index: number): number {
   return (page.value - 1) * pageSize.value + index + 1
 }
 
-async function loadComments(currentPage = 1) {
+async function loadComments(currentPage = 1): Promise<void> {
   loading.value = true
   try {
     const data = await getAdminCommentList({
@@ -46,16 +46,16 @@ async function loadComments(currentPage = 1) {
   }
 }
 
-function handleSearchSubmit(event: Event) {
+function handleSearchSubmit(event: Event): void {
   event.preventDefault()
   void loadComments(1)
 }
 
-function handlePageChange(nextPage: number) {
+function handlePageChange(nextPage: number): void {
   void loadComments(nextPage)
 }
 
-async function handleApprove(item: AdminCommentItem) {
+async function handleApprove(item: AdminCommentItem): Promise<void> {
   try {
     await approveAdminComment(item.id, !item.is_approved)
     feedback.success('评论状态已更新')
@@ -65,7 +65,7 @@ async function handleApprove(item: AdminCommentItem) {
   }
 }
 
-async function handleDelete(item: AdminCommentItem) {
+async function handleDelete(item: AdminCommentItem): Promise<void> {
   if (!window.confirm('确定要删除该评论吗？')) return
   try {
     await deleteAdminComment(item.id)

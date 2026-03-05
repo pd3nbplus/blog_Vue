@@ -80,7 +80,7 @@ function rowClassName(record: AdminLogItem): string {
   return `log-row-${record.level.toLowerCase()}`
 }
 
-async function loadLogs(targetPage = page.value) {
+async function loadLogs(targetPage = page.value): Promise<void> {
   loading.value = true
   try {
     const data = await getAdminLogList({
@@ -102,18 +102,18 @@ async function loadLogs(targetPage = page.value) {
   }
 }
 
-function handleSearch() {
+function handleSearch(): void {
   void loadLogs(1)
 }
 
-function handleReset() {
+function handleReset(): void {
   keyword.value = ''
   levelFilter.value = 'ALL'
   sourceFilter.value = 'all'
   void loadLogs(1)
 }
 
-function handleTableChange(next: { current?: number; pageSize?: number }) {
+function handleTableChange(next: { current?: number; pageSize?: number }): void {
   page.value = next.current || 1
   pageSize.value = next.pageSize || 50
   void loadLogs(page.value)
@@ -184,24 +184,24 @@ onMounted(() => {
         @change="handleTableChange"
       >
         <a-table-column title="时间" data-index="timestamp" :width="190" />
-        <a-table-column title="等级" key="level" :width="110">
+        <a-table-column key="level" title="等级" :width="110">
           <template #default="{ record }">
             <a-tag :color="levelTagColor(record.level)">
               <span :class="levelTextClass(record.level)">{{ record.level }}</span>
             </a-tag>
           </template>
         </a-table-column>
-        <a-table-column title="来源" key="source" :width="100">
+        <a-table-column key="source" title="来源" :width="100">
           <template #default="{ record }">
             <a-tag :color="sourceTagColor(record.source)">{{ sourceLabel(record.source) }}</a-tag>
           </template>
         </a-table-column>
-        <a-table-column title="位置" key="location" :width="260">
+        <a-table-column key="location" title="位置" :width="260">
           <template #default="{ record }">
             <code class="location-code">{{ record.location }}</code>
           </template>
         </a-table-column>
-        <a-table-column title="内容" key="message">
+        <a-table-column key="message" title="内容">
           <template #default="{ record }">
             <pre class="message-pre">{{ record.message }}</pre>
           </template>

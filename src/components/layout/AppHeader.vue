@@ -8,7 +8,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const username = computed(() => userStore.profile?.username || '游客')
 
-async function handleLogout() {
+async function handleLogout(): Promise<void> {
   await userStore.doLogout()
   await router.push({ name: 'home' })
 }

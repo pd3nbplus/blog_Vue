@@ -14,7 +14,7 @@ const formState = reactive({
   password: '',
 })
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   try {
     await userStore.doLogin(formState)
     message.success('登录成功')

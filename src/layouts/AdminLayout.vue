@@ -30,7 +30,7 @@ function isActive(path: string): boolean {
   return route.path.startsWith(basePath)
 }
 
-function handleThemeChange(event: Event) {
+function handleThemeChange(event: Event): void {
   const select = event.target as HTMLSelectElement
   setTheme(select.value as AppTheme)
 }

@@ -24,7 +24,7 @@ function barWidth(count: number): string {
   return `${Math.max(8, Math.round((count / maxCategoryCount.value) * 100))}%`
 }
 
-async function loadSummary() {
+async function loadSummary(): Promise<void> {
   loading.value = true
   try {
     summary.value = await getAdminDashboardSummary()

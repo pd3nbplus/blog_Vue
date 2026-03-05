@@ -114,11 +114,11 @@ function rewriteCsdnImageSrcInHtml(html: string): string {
   })
 }
 
-function scrollToTop() {
+function scrollToTop(): void {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function loadScriptOnce(src: string) {
+function loadScriptOnce(src: string): Promise<void> {
   if (loadedScripts.has(src)) return Promise.resolve()
   return new Promise<void>((resolve, reject) => {
     const script = document.createElement('script')
@@ -133,7 +133,7 @@ function loadScriptOnce(src: string) {
   })
 }
 
-async function enhanceArticleContent() {
+async function enhanceArticleContent(): Promise<void> {
   if (!detail.value || !renderedHtml.value) return
   await nextTick()
 

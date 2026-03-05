@@ -32,7 +32,7 @@ const passwordState = reactive({
   confirmPassword: '',
 })
 
-async function loadProfile() {
+async function loadProfile(): Promise<void> {
   loading.value = true
   try {
     const profile = await getAdminProfile()
@@ -47,7 +47,7 @@ async function loadProfile() {
   }
 }
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   submitting.value = true
   try {
     await updateAdminProfile({
@@ -102,7 +102,7 @@ function buildUploadedMediaPath(path: string, name: string): string {
   return `${normalizedPath}/${normalizedName}`
 }
 
-async function handleAvatarUpload() {
+async function handleAvatarUpload(): Promise<void> {
   if (!avatarFile.value) {
     feedback.error('请先选择头像图片')
     return
@@ -124,7 +124,7 @@ async function handleAvatarUpload() {
   }
 }
 
-async function handleHeroUpload() {
+async function handleHeroUpload(): Promise<void> {
   if (!heroFile.value) {
     feedback.error('请先选择首页大图')
     return
@@ -146,7 +146,7 @@ async function handleHeroUpload() {
   }
 }
 
-async function handlePasswordSubmit() {
+async function handlePasswordSubmit(): Promise<void> {
   if (!passwordState.currentPassword || !passwordState.nextPassword) {
     feedback.error('请填写当前密码和新密码')
     return

@@ -18,7 +18,7 @@ const formState = reactive({
 })
 const submitting = ref(false)
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   if (submitting.value) return
   submitting.value = true
   try {
@@ -33,7 +33,7 @@ async function handleSubmit() {
   }
 }
 
-function handleThemeChange(event: Event) {
+function handleThemeChange(event: Event): void {
   const select = event.target as HTMLSelectElement
   setTheme(select.value as AppTheme)
 }

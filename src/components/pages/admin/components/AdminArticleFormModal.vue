@@ -67,7 +67,7 @@ const rules = computed<Record<string, Rule[]>>(() => ({
   markdown_content: [{ required: true, message: '请输入 Markdown 正文', trigger: 'blur' }],
 }))
 
-function resetForm() {
+function resetForm(): void {
   formState.title = ''
   formState.slug = ''
   formState.summary = ''
@@ -79,7 +79,7 @@ function resetForm() {
   formState.is_pinned = false
 }
 
-function syncFormFromInitialValue() {
+function syncFormFromInitialValue(): void {
   resetForm()
   if (!props.initialValue) return
 
@@ -214,7 +214,7 @@ function extractLocalImageRefs(markdownContent: string): string[] {
   return refs
 }
 
-function resetLocalImageDialog() {
+function resetLocalImageDialog(): void {
   pendingSubmitPayload.value = null
   pendingLocalRefs.value = []
   selectedLocalFiles.value = []
@@ -234,7 +234,7 @@ const handleMarkdownRemove: UploadProps['onRemove'] = () => {
   return true
 }
 
-async function handleMarkdownFileUpload() {
+async function handleMarkdownFileUpload(): Promise<void> {
   const file = selectedMarkdownFile.value
   if (!file) {
     message.warning('请先选择 Markdown 文件')
@@ -276,7 +276,7 @@ const coverPreview = computed(() => {
   return resolveTempAsset(value)
 })
 
-async function handleCoverFileUpload() {
+async function handleCoverFileUpload(): Promise<void> {
   const file = selectedCoverFile.value
   if (!file) {
     message.warning('请先选择封面图片')
@@ -307,7 +307,7 @@ const handleLocalDirectoryBeforeUpload: UploadProps['beforeUpload'] = (file) => 
   return false
 }
 
-function clearSelectedLocalFiles() {
+function clearSelectedLocalFiles(): void {
   selectedLocalFiles.value = []
 }
 
@@ -334,7 +334,7 @@ function getPreviewStatusText(status: 'matched' | 'unmatched' | 'ambiguous'): st
   return '未匹配'
 }
 
-async function handleConfirm() {
+async function handleConfirm(): Promise<void> {
   const formInstance = formRef.value
   if (formInstance?.validate) {
     await formInstance.validate()
@@ -364,7 +364,7 @@ async function handleConfirm() {
   emit('submit', payload)
 }
 
-function handleSkipUploadAndSubmit() {
+function handleSkipUploadAndSubmit(): void {
   const payload = pendingSubmitPayload.value
   resetLocalImageDialog()
   if (payload) {
@@ -372,7 +372,7 @@ function handleSkipUploadAndSubmit() {
   }
 }
 
-async function handleUploadAndSubmit() {
+async function handleUploadAndSubmit(): Promise<void> {
   const payload = pendingSubmitPayload.value
   if (!payload) return
 

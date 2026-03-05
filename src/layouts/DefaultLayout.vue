@@ -120,5 +120,6 @@ onMounted(() => {
 </template>
 
 <style>
+/* non-scoped: layout shell needs global structure styles from legacy base stylesheet */
 @import '@/styles/legacy/base.css';
 </style>

@@ -70,7 +70,7 @@ const referrerPolicy = computed(() => {
   return undefined
 })
 
-function handleError(event: Event) {
+function handleError(event: Event): void {
   if (!usingFallback.value && candidateIndex.value < candidates.value.length - 1) {
     candidateIndex.value += 1
     return
@@ -88,7 +88,7 @@ function handleError(event: Event) {
   emit('error', event)
 }
 
-function handleLoad(event: Event) {
+function handleLoad(event: Event): void {
   emit('load', event)
 }
 </script>

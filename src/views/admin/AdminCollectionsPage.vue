@@ -65,7 +65,7 @@ function resolveCoverSrc(path?: string | null): string {
   return resolveTempAsset(path) || '/img/hero-image.jpg'
 }
 
-async function fetchCollections(targetPage = page.value) {
+async function fetchCollections(targetPage = page.value): Promise<void> {
   loading.value = true
   try {
     const data = await getAdminCollectionList({
@@ -86,7 +86,7 @@ async function fetchCollections(targetPage = page.value) {
   }
 }
 
-async function fetchArticleOptions(search = '') {
+async function fetchArticleOptions(search = ''): Promise<void> {
   articleOptionsLoading.value = true
   try {
     const data = await getAdminArticleList({
@@ -106,7 +106,7 @@ async function fetchArticleOptions(search = '') {
   }
 }
 
-function resetForm() {
+function resetForm(): void {
   formState.name = ''
   formState.slug = ''
   formState.summary = ''
@@ -116,13 +116,13 @@ function resetForm() {
   formState.article_ids = []
 }
 
-function openCreate() {
+function openCreate(): void {
   editingId.value = null
   resetForm()
   modalOpen.value = true
 }
 
-async function openEdit(id: number) {
+async function openEdit(id: number): Promise<void> {
   try {
     const detail = await getAdminCollectionDetail(id)
     editingId.value = id
@@ -147,7 +147,7 @@ function buildUploadedMediaPath(path: string, name: string): string {
   return `${normalizedPath}/${normalizedName}`
 }
 
-async function uploadSelectedCover(file: File) {
+async function uploadSelectedCover(file: File): Promise<void> {
   if (coverUploading.value) return
   coverUploading.value = true
   try {
@@ -169,7 +169,7 @@ const handleCoverBeforeUpload: UploadProps['beforeUpload'] = (file) => {
   return false
 }
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   const form = formRef.value
   if (form?.validate) {
     await form.validate()
@@ -202,7 +202,7 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(id: number) {
+async function handleDelete(id: number): Promise<void> {
   try {
     await deleteAdminCollection(id)
     feedback.success('合集删除成功')
@@ -212,11 +212,11 @@ async function handleDelete(id: number) {
   }
 }
 
-function handleSearch() {
+function handleSearch(): void {
   void fetchCollections(1)
 }
 
-function handleReset() {
+function handleReset(): void {
   keyword.value = ''
   pinnedFilter.value = undefined
   void fetchCollections(1)
@@ -272,12 +272,12 @@ onMounted(async () => {
 
     <div class="table-card app-surface-card">
       <a-table :data-source="list" :loading="loading" :pagination="false" row-key="id" size="middle" :scroll="{ x: 1220 }">
-        <a-table-column title="封面" key="cover" :width="100">
+        <a-table-column key="cover" title="封面" :width="100">
           <template #default="{ record }">
             <AppImage :src="resolveCoverSrc(record.cover_path)" alt="collection-cover" class="thumb" fallback-src="/img/hero-image.jpg" />
           </template>
         </a-table-column>
-        <a-table-column title="合集" key="name" :width="260">
+        <a-table-column key="name" title="合集" :width="260">
           <template #default="{ record }">
             <div class="name-cell">
               <strong>{{ record.name }}</strong>
@@ -286,7 +286,7 @@ onMounted(async () => {
           </template>
         </a-table-column>
         <a-table-column title="概述" data-index="summary" :width="320" />
-        <a-table-column title="置顶" key="is_pinned" :width="100">
+        <a-table-column key="is_pinned" title="置顶" :width="100">
           <template #default="{ record }">
             <a-tag :color="record.is_pinned ? 'success' : 'default'">{{ record.is_pinned ? '置顶' : '普通' }}</a-tag>
           </template>
@@ -294,12 +294,12 @@ onMounted(async () => {
         <a-table-column title="排序" data-index="order" :width="80" />
         <a-table-column title="文章总数" data-index="article_count" :width="100" />
         <a-table-column title="浏览总量" data-index="total_views" :width="110" />
-        <a-table-column title="更新时间" key="updated_at" :width="170">
+        <a-table-column key="updated_at" title="更新时间" :width="170">
           <template #default="{ record }">
             {{ formatDateTime(record.updated_at) }}
           </template>
         </a-table-column>
-        <a-table-column title="操作" key="actions" :width="170" fixed="right">
+        <a-table-column key="actions" title="操作" :width="170" fixed="right">
           <template #default="{ record }">
             <a-space>
               <a-button size="small" type="primary" ghost @click="openEdit(record.id)">编辑</a-button>

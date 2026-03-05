@@ -33,7 +33,7 @@ const iconUploadList = ref<Array<{ uid: string; name: string; status: 'done' }>>
 
 const categoryMap = computed(() => {
   const map = new Map<number, CategoryItem>()
-  const walk = (items: CategoryItem[]) => {
+  const walk = (items: CategoryItem[]): void => {
     for (const item of items) {
       map.set(item.id, item)
       if (item.children?.length) {
@@ -54,7 +54,7 @@ const selectedCategory = computed(() => {
 const visibleRows = computed<CategoryTreeRow[]>(() => {
   const rows: CategoryTreeRow[] = []
 
-  const walk = (items: CategoryItem[], depth: number) => {
+  const walk = (items: CategoryItem[], depth: number): void => {
     for (const item of items) {
       const hasChildren = Boolean(item.children?.length)
       rows.push({ item, depth, hasChildren })
@@ -73,11 +73,11 @@ function getIcon(path?: string): string | null {
   return resolveTempAsset(path)
 }
 
-function resetExpanded() {
+function resetExpanded(): void {
   expanded.value = new Set()
 }
 
-async function loadCategories() {
+async function loadCategories(): Promise<void> {
   loading.value = true
   try {
     const data = await getAdminCategoryTree()
@@ -94,7 +94,7 @@ function isExpanded(id: number): boolean {
   return expanded.value.has(id)
 }
 
-function toggleCategory(id: number) {
+function toggleCategory(id: number): void {
   const next = new Set(expanded.value)
   if (next.has(id)) {
     next.delete(id)
@@ -104,7 +104,7 @@ function toggleCategory(id: number) {
   expanded.value = next
 }
 
-function openModal(action: ModalAction, categoryId: number | null = null) {
+function openModal(action: ModalAction, categoryId: number | null = null): void {
   if (action === 'create' && categoryId) {
     const parent = categoryMap.value.get(categoryId)
     if (parent?.parent) {
@@ -120,7 +120,7 @@ function openModal(action: ModalAction, categoryId: number | null = null) {
   iconUploadList.value = []
 }
 
-function closeModal() {
+function closeModal(): void {
   modal.visible = false
   modal.name = ''
   iconFile.value = null
@@ -139,7 +139,7 @@ const handleIconRemove: UploadProps['onRemove'] = () => {
   return true
 }
 
-async function handleDelete(categoryId: number) {
+async function handleDelete(categoryId: number): Promise<void> {
   if (!window.confirm('确定要删除该分类吗？')) return
   try {
     await deleteAdminCategory(categoryId)
@@ -150,7 +150,7 @@ async function handleDelete(categoryId: number) {
   }
 }
 
-async function handleModalSubmit(event: Event) {
+async function handleModalSubmit(event: Event): Promise<void> {
   event.preventDefault()
   if (!modal.name.trim()) {
     feedback.error('分类名称不能为空')
