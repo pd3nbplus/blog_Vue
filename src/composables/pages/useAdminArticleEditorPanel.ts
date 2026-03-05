@@ -89,6 +89,11 @@ export function useAdminArticleEditorPanel(
     draftPersistTimer = null
   }
 
+  function flushCreateDraftPersist(): void {
+    clearDraftPersistTimer()
+    persistCreateDraft()
+  }
+
   function getFormSnapshot(): AdminArticleFormInput {
     return {
       title: formState.title,
@@ -418,6 +423,7 @@ export function useAdminArticleEditorPanel(
     if (formInstance?.validate) {
       await formInstance.validate()
     }
+    flushCreateDraftPersist()
     const payload: AdminArticlePayload = {
       title: formState.title.trim(),
       slug: formState.slug.trim(),
@@ -442,58 +448,48 @@ export function useAdminArticleEditorPanel(
     emitSubmit(payload)
   }
   async function handleSkipUploadAndSubmit(): Promise<void> {
-    const payload = pendingSubmitPayload.value
     resetLocalImageDialog()
-    if (payload) {
-      const uploaded = await uploadCoverBeforeSubmit(payload)
-      if (!uploaded) return
-      emitSubmit(payload)
-    }
+    message.info('请先上传并匹配本地图片后再发布')
   }
   async function handleUploadAndSubmit(): Promise<void> {
     const payload = pendingSubmitPayload.value
     if (!payload) return
     const { mappings, unmatchedRefs, ambiguousRefs } = localImageMatchResult.value
-    if (mappings.length > 0) {
-      if (!payload.source_markdown_path.trim()) {
-        message.error('已匹配到本地图片，但缺少来源 Markdown 路径，请先补全后再上传')
+    if (selectedLocalFiles.value.length <= 0 || mappings.length <= 0) {
+      message.error('检测到本地图片引用，请先选择并匹配图片文件后再发布')
+      return
+    }
+    if (unmatchedRefs.length > 0 || ambiguousRefs.length > 0) {
+      message.error(
+        `仍有图片引用未处理（未匹配 ${unmatchedRefs.length}，冲突 ${ambiguousRefs.length}），请补齐后再发布`,
+      )
+      return
+    }
+    if (!payload.source_markdown_path.trim()) {
+      message.error('已匹配到本地图片，但缺少来源 Markdown 路径，请先补全后再上传')
+      return
+    }
+    localImageSubmitting.value = true
+    try {
+      const result = await resolveAdminArticleLocalImages({
+        markdown_content: payload.markdown_content,
+        source_markdown_path: payload.source_markdown_path,
+        mappings,
+      })
+      payload.markdown_content = result.markdown_content
+      payload.source_markdown_path = result.source_markdown_path || payload.source_markdown_path
+      const unresolved = new Set<string>(result.unresolved_refs || [])
+      if (unresolved.size > 0) {
+        const sample = Array.from(unresolved).slice(0, 2).join('、')
+        message.error(`本地图片仍有 ${unresolved.size} 处未处理：${sample}${unresolved.size > 2 ? '…' : ''}`)
         return
       }
-      localImageSubmitting.value = true
-      try {
-        const result = await resolveAdminArticleLocalImages({
-          markdown_content: payload.markdown_content,
-          source_markdown_path: payload.source_markdown_path,
-          mappings,
-        })
-        payload.markdown_content = result.markdown_content
-        payload.source_markdown_path = result.source_markdown_path || payload.source_markdown_path
-        const unresolved = new Set<string>([
-          ...unmatchedRefs,
-          ...ambiguousRefs,
-          ...(result.unresolved_refs || []),
-        ])
-        if (unresolved.size > 0) {
-          const sample = Array.from(unresolved).slice(0, 2).join('、')
-          message.warning(`本地图片仍有 ${unresolved.size} 处未处理：${sample}${unresolved.size > 2 ? '…' : ''}`)
-        } else {
-          message.success(`本地图片处理完成，已上传 ${result.uploaded.length} 个文件并重写引用`)
-        }
-      } catch {
-        message.error('本地图片上传失败，请重试')
-        return
-      } finally {
-        localImageSubmitting.value = false
-      }
-    } else {
-      const unresolvedTotal = unmatchedRefs.length + ambiguousRefs.length
-      if (unresolvedTotal > 0) {
-        message.warning(
-          `未匹配到可上传图片（未匹配 ${unmatchedRefs.length}，冲突 ${ambiguousRefs.length}），将直接提交`,
-        )
-      } else {
-        message.info('未选择图片文件，已直接提交文章')
-      }
+      message.success(`本地图片处理完成，已上传 ${result.uploaded.length} 个文件并重写引用`)
+    } catch {
+      message.error('本地图片上传失败，请重试')
+      return
+    } finally {
+      localImageSubmitting.value = false
     }
     const submitPayload = { ...payload }
     resetLocalImageDialog()
@@ -527,8 +523,10 @@ export function useAdminArticleEditorPanel(
     },
   )
   onBeforeUnmount(() => {
-    clearDraftPersistTimer()
-    persistCreateDraft()
+    if (draftPersistTimer) {
+      clearDraftPersistTimer()
+      persistCreateDraft()
+    }
     resetAssetSelectionState()
   })
   return {

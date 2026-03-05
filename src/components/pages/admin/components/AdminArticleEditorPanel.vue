@@ -196,13 +196,13 @@ const {
     :open="localImageDialogOpen"
     title="检测到本地图片引用"
     :confirm-loading="localImageSubmitting"
-    ok-text="上传并继续提交"
-    cancel-text="直接提交"
+    ok-text="上传并发布"
+    cancel-text="返回编辑"
     @ok="handleUploadAndSubmit"
     @cancel="handleSkipUploadAndSubmit"
   >
     <p>检测到 {{ pendingLocalRefs.length }} 处本地图片引用。</p>
-    <p>可选择单个文件或整个图片目录，系统将优先按“相对路径”匹配，失败时再按“文件名”匹配。</p>
+    <p>发布前必须先完成图片上传与匹配。可选择单个文件或整个图片目录，系统将优先按“相对路径”匹配，失败时再按“文件名”匹配。</p>
     <div class="upload-line">
       <a-upload :show-upload-list="false" :before-upload="handleLocalFilesBeforeUpload" multiple accept="image/*">
         <a-button size="small">
