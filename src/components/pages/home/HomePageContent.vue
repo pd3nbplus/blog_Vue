@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 
 import AppImage from '@/components/common/AppImage.vue'
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
+import CategoryTreePanel from '@/components/common/CategoryTreePanel.vue'
 import { useFeedback } from '@/composables/useFeedback'
 import { useHomePage } from '@/composables/pages/useHomePage'
+import { useArticleStore } from '@/stores/modules/article'
 import { getArticleList, getHomeRecommendations } from '@/services/api/article'
 import type { ArticleItem, CategoryItem, CollectionItem } from '@/types/article'
 import { resolveTempAsset } from '@/utils/assets'
 
 const { homeSummary, loading } = useHomePage()
+const articleStore = useArticleStore()
+const { categories } = storeToRefs(articleStore)
+const router = useRouter()
 const feedback = useFeedback()
-const openedCategories = ref<number[]>([])
 const isLiked = ref(false)
 const recommendedArticles = ref<ArticleItem[]>([])
 const recommendationPage = ref(1)
@@ -44,18 +50,6 @@ const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
 const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/hero-image.webp')
-
-function isOpened(id: number): boolean {
-  return openedCategories.value.includes(id)
-}
-
-function toggleCategory(id: number): void {
-  if (isOpened(id)) {
-    openedCategories.value = openedCategories.value.filter((item) => item !== id)
-    return
-  }
-  openedCategories.value.push(id)
-}
 
 function toggleLike(): void {
   isLiked.value = !isLiked.value
@@ -102,8 +96,30 @@ function articleCategoryIcon(article: ArticleItem): string {
   return getCategoryIcon(article.category?.icon_path)
 }
 
-function topCategories(categories: CategoryItem[] = []): CategoryItem[] {
-  return categories.filter((item) => item.level === 1)
+function findCategoryById(tree: CategoryItem[], id: number): CategoryItem | null {
+  for (const node of tree) {
+    if (node.id === id) return node
+    if (node.children?.length) {
+      const found = findCategoryById(node.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+function goToCategory(categoryId: number): void {
+  const category = findCategoryById(categories.value, categoryId)
+  if (!category) return
+  void router.push({ name: 'category', params: { categoryId: category.id } })
+}
+
+async function loadCategories(): Promise<void> {
+  if (categories.value.length) return
+  try {
+    await articleStore.fetchCategories()
+  } catch (error) {
+    feedback.error(error, '加载分类失败')
+  }
 }
 
 function isNearBottom(): boolean {
@@ -224,6 +240,7 @@ function handleScroll(): void {
 }
 
 onMounted(() => {
+  void loadCategories()
   queueNonCriticalLoads()
   window.addEventListener('scroll', handleScroll, { passive: true })
 })
@@ -370,26 +387,7 @@ onBeforeUnmount(() => {
           </ul>
         </div>
 
-        <div class="categories">
-          <div class="categories-title">
-            <h2>文章分类</h2>
-          </div>
-          <ul>
-            <li v-for="category in topCategories(homeSummary?.categories || [])" :key="category.id" class="category-item">
-              <a href="javascript:void(0);" @click.prevent="toggleCategory(category.id)">
-                <span class="arrowhead-span">></span> {{ category.name }}
-              </a>
-              <ul v-show="isOpened(category.id)" class="subcategory-list">
-                <li v-for="subcategory in category.children || []" :key="subcategory.id">
-                  <router-link :to="{ name: 'category', params: { categoryId: subcategory.id } }">
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="arrowhead-span">></span>
-                    {{ subcategory.name }}
-                  </router-link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
+        <CategoryTreePanel :categories="categories" @select="goToCategory" />
       </div>
     </div>
   </a-spin>

@@ -3,6 +3,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ArticlePreviewCard from '@/components/common/ArticlePreviewCard.vue'
+import CategoryTreePanel from '@/components/common/CategoryTreePanel.vue'
 import { useArticleListPage } from '@/composables/pages/useArticleListPage'
 import { getHomeRecommendations } from '@/services/api/article'
 import type { ArticleItem, CategoryItem } from '@/types/article'
@@ -12,7 +13,6 @@ const { list, total, page, pageSize, loading, categories, query, selectedCategor
   useArticleListPage()
 const router = useRouter()
 
-const openedCategories = ref<number[]>([])
 const spotlightArticle = ref<ArticleItem | null>(null)
 const spotlightLoading = ref(false)
 const spotlightRefreshing = ref(false)
@@ -49,8 +49,6 @@ const currentGroupCategory = computed(() => {
   return current
 })
 
-const topCategories = computed(() => categories.value.filter((item) => item.level === 1))
-
 function findCategoryById(tree: CategoryItem[], id: number): CategoryItem | null {
   for (const node of tree) {
     if (node.id === id) return node
@@ -73,18 +71,6 @@ function findParentCategoryByChildId(tree: CategoryItem[], childId: number): Cat
     }
   }
   return null
-}
-
-function isOpened(id: number): boolean {
-  return openedCategories.value.includes(id)
-}
-
-function toggleSubcategories(id: number) {
-  if (isOpened(id)) {
-    openedCategories.value = openedCategories.value.filter((item) => item !== id)
-    return
-  }
-  openedCategories.value.push(id)
 }
 
 function isActiveCategory(id: number): boolean {
@@ -262,27 +248,7 @@ onUnmounted(() => {
           <img v-else src="/img/query-img.jpg" alt="search" />
         </div>
 
-        <div class="categories">
-          <div class="categories-title">
-            <h2>文章分类</h2>
-          </div>
-          <ul>
-            <li v-for="category in topCategories" :key="category.id" class="category-item">
-              <a href="javascript:void(0);" @click.prevent="toggleSubcategories(category.id)">
-                <img v-if="categoryIcon(category.icon_path)" :src="categoryIcon(category.icon_path)" alt="icon" class="category-icon" />
-                {{ category.name }}
-              </a>
-              <ul v-show="isOpened(category.id)" class="subcategory-list">
-                <li v-for="subcategory in category.children || []" :key="subcategory.id">
-                  <router-link :to="{ name: 'category', params: { categoryId: subcategory.id } }">
-                    <img v-if="categoryIcon(subcategory.icon_path)" :src="categoryIcon(subcategory.icon_path)" alt="icon" class="category-child-icon" />
-                    {{ subcategory.name }}
-                  </router-link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
+        <CategoryTreePanel :categories="categories" @select="goToCategory" />
       </div>
 
       <div class="column right-column">
