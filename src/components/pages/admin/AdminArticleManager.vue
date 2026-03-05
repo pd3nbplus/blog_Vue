@@ -37,11 +37,25 @@ const {
   handleSubmit,
   handleArchive,
   handleCancelEditor,
+  collectionBindingOpen,
+  collectionBindingLoading,
+  collectionBindingSubmitting,
+  collectionBindingArticleTitle,
+  collectionBindingValue,
+  collectionBindingOptions,
+  handleOpenCollectionBinding,
+  handleCloseCollectionBinding,
+  handleSaveCollectionBinding,
 } = useAdminArticleManager()
 
 const route = useRoute()
 const router = useRouter()
 const isEditorRoute = computed(() => route.path.startsWith('/admin/create_article/'))
+const collectionBindingModalTitle = computed(() =>
+  collectionBindingArticleTitle.value
+    ? `配置合集归属：${collectionBindingArticleTitle.value}`
+    : '配置合集归属',
+)
 
 interface CategoryDisplay {
   parent: string
@@ -115,6 +129,10 @@ function handlePreview(id: number): void {
 
 function handleDelete(id: number): void {
   void handleArchive(id)
+}
+
+function handleCollectionBinding(record: ArticleItem): void {
+  void handleOpenCollectionBinding(record)
 }
 
 function showTotal(totalCount: number): string {
@@ -277,11 +295,12 @@ function handleTableChange(
               {{ formatDateTime(record.updated_at) }}
             </template>
           </a-table-column>
-          <a-table-column title="操作" key="actions" :width="210" fixed="right">
+          <a-table-column title="操作" key="actions" :width="270" fixed="right">
             <template #default="{ record }">
               <a-space>
                 <a-button size="small" type="primary" ghost @click="handleEdit(record.id)">编辑</a-button>
                 <a-button size="small" @click="handlePreview(record.id)">预览</a-button>
+                <a-button size="small" @click="handleCollectionBinding(record)">合集</a-button>
                 <a-popconfirm title="确定删除这篇文章吗？" ok-text="删除" cancel-text="取消" @confirm="handleDelete(record.id)">
                   <a-button size="small" danger>删除</a-button>
                 </a-popconfirm>
@@ -301,6 +320,35 @@ function handleTableChange(
           />
         </div>
       </div>
+
+      <a-modal
+        :open="collectionBindingOpen"
+        :title="collectionBindingModalTitle"
+        :confirm-loading="collectionBindingSubmitting"
+        ok-text="保存"
+        cancel-text="取消"
+        @ok="handleSaveCollectionBinding"
+        @cancel="handleCloseCollectionBinding"
+      >
+        <a-spin :spinning="collectionBindingLoading">
+          <a-form layout="vertical">
+            <a-form-item label="归属合集（可多选）">
+              <a-select
+                v-model:value="collectionBindingValue"
+                mode="multiple"
+                allow-clear
+                show-search
+                option-filter-prop="label"
+                :options="collectionBindingOptions"
+                placeholder="选择该文章要纳入的合集"
+              />
+            </a-form-item>
+            <p class="collection-bind-tip">
+              已选择 {{ collectionBindingValue.length }} 个合集，保存后将同步更新文章与合集的多对多关系。
+            </p>
+          </a-form>
+        </a-spin>
+      </a-modal>
     </template>
   </section>
 </template>
@@ -430,6 +478,12 @@ function handleTableChange(
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
+}
+
+.collection-bind-tip {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 :deep(.ant-table-wrapper .ant-table) {

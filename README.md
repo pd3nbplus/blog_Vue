@@ -2,6 +2,10 @@
 
 基于 `Vue 3 + TypeScript + Pinia + Vue Router + Ant Design Vue` 的博客前端工程，包含门户站点与后台管理。
 
+![alt text](image.png)
+
+![alt text](image-1.png)
+
 ## 项目目标
 
 - 门户：首页、文章列表、文章详情、合集、搜索。

@@ -5,8 +5,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFeedback } from '@/composables/useFeedback'
 import { getCategoryTree } from '@/services/api/article'
 import type { AdminArticleOrderingDirection, AdminArticleOrderingField } from '@/services/api/adminArticle'
+import {
+  getAdminCollectionDetail,
+  getAdminCollectionList,
+  updateAdminCollection,
+} from '@/services/api/adminCollection'
 import { useAdminArticleStore } from '@/stores/modules/adminArticle'
-import type { AdminArticlePayload, ArticleStatus, CategoryItem } from '@/types/article'
+import type {
+  AdminArticlePayload,
+  ArticleItem,
+  ArticleStatus,
+  CategoryItem,
+  CollectionDetail,
+  CollectionItem,
+} from '@/types/article'
 import { ARTICLE_STATUS_OPTIONS, isArticleStatus } from '@/utils/articleStatus'
 import { flattenCategoryTreeToOptions } from '@/utils/article'
 
@@ -53,7 +65,16 @@ export function useAdminArticleManager() {
   const editorLoading = ref(false)
   const editingId = ref<number | null>(null)
   const editingFormValue = ref<Partial<AdminArticlePayload> | null>(null)
+  const collectionBindingOpen = ref(false)
+  const collectionBindingLoading = ref(false)
+  const collectionBindingSubmitting = ref(false)
+  const collectionBindingArticleId = ref<number | null>(null)
+  const collectionBindingArticleTitle = ref('')
+  const collectionBindingValue = ref<number[]>([])
+  const collectionBindingOptions = ref<Array<{ label: string; value: number }>>([])
+  const collectionDetailsMap = ref<Record<number, CollectionDetail>>({})
   let keywordSearchTimer: ReturnType<typeof setTimeout> | null = null
+  let collectionBindingLoadToken = 0
 
   const statusOptions = ARTICLE_STATUS_OPTIONS
   const orderingValue = computed<`${'' | '-'}${AdminArticleOrderingField}`>(() => {
@@ -287,6 +308,127 @@ export function useAdminArticleManager() {
     await router.replace('/admin/manage_articles/?page=1&page_size=15&ordering=-published_at')
   }
 
+  async function fetchAllCollections(): Promise<CollectionItem[]> {
+    const merged: CollectionItem[] = []
+    let currentPage = 1
+    let totalPages = 1
+
+    while (currentPage <= totalPages) {
+      const response = await getAdminCollectionList({
+        page: currentPage,
+        page_size: 100,
+        ordering: 'name',
+      })
+      merged.push(...response.results)
+      totalPages = Math.max(1, response.num_pages || 1)
+      currentPage += 1
+    }
+    return merged
+  }
+
+  async function handleOpenCollectionBinding(article: ArticleItem): Promise<void> {
+    collectionBindingOpen.value = true
+    collectionBindingLoading.value = true
+    collectionBindingArticleId.value = article.id
+    collectionBindingArticleTitle.value = article.title || ''
+    collectionBindingValue.value = []
+
+    const loadToken = ++collectionBindingLoadToken
+    try {
+      const collections = await fetchAllCollections()
+      if (loadToken !== collectionBindingLoadToken) return
+
+      collectionBindingOptions.value = collections.map((item) => ({
+        label: `${item.name} (#${item.id})`,
+        value: item.id,
+      }))
+
+      const detailList = await Promise.all(
+        collections.map(async (item) => {
+          try {
+            return await getAdminCollectionDetail(item.id)
+          } catch {
+            return null
+          }
+        }),
+      )
+      if (loadToken !== collectionBindingLoadToken) return
+
+      const detailsMap: Record<number, CollectionDetail> = {}
+      const selectedCollectionIds: number[] = []
+      for (const detail of detailList) {
+        if (!detail) continue
+        detailsMap[detail.id] = detail
+        if (detail.article_ids.includes(article.id)) {
+          selectedCollectionIds.push(detail.id)
+        }
+      }
+      collectionDetailsMap.value = detailsMap
+      collectionBindingValue.value = selectedCollectionIds
+    } catch (error) {
+      feedback.error(error, '加载合集归属失败')
+    } finally {
+      if (loadToken === collectionBindingLoadToken) {
+        collectionBindingLoading.value = false
+      }
+    }
+  }
+
+  function handleCloseCollectionBinding(): void {
+    collectionBindingLoadToken += 1
+    collectionBindingOpen.value = false
+    collectionBindingLoading.value = false
+    collectionBindingSubmitting.value = false
+    collectionBindingArticleId.value = null
+    collectionBindingArticleTitle.value = ''
+    collectionBindingValue.value = []
+    collectionBindingOptions.value = []
+    collectionDetailsMap.value = {}
+  }
+
+  async function handleSaveCollectionBinding(): Promise<void> {
+    const articleId = collectionBindingArticleId.value
+    if (!articleId) return
+
+    const selectedSet = new Set(collectionBindingValue.value)
+    const updates = Object.values(collectionDetailsMap.value)
+      .map((detail) => {
+        const currentHas = detail.article_ids.includes(articleId)
+        const targetHas = selectedSet.has(detail.id)
+        if (currentHas === targetHas) return null
+
+        const nextIds = targetHas
+          ? Array.from(new Set([...detail.article_ids, articleId]))
+          : detail.article_ids.filter((id) => id !== articleId)
+        return { id: detail.id, articleIds: nextIds }
+      })
+      .filter((item): item is { id: number; articleIds: number[] } => Boolean(item))
+
+    if (!updates.length) {
+      feedback.success('合集归属未变化')
+      handleCloseCollectionBinding()
+      return
+    }
+
+    collectionBindingSubmitting.value = true
+    try {
+      await Promise.all(
+        updates.map((item) =>
+          updateAdminCollection(item.id, {
+            article_ids: item.articleIds,
+          }),
+        ),
+      )
+      feedback.success('合集归属更新成功')
+      handleCloseCollectionBinding()
+      await fetchList(page.value, true)
+    } catch (error) {
+      feedback.error(error, '更新合集归属失败')
+    } finally {
+      collectionBindingSubmitting.value = false
+    }
+  }
+
   onMounted(async () => {
     syncFilterFromRoute()
     await fetchCategories()
@@ -338,5 +480,14 @@ export function useAdminArticleManager() {
     handleSubmit,
     handleArchive,
     handleCancelEditor,
+    collectionBindingOpen,
+    collectionBindingLoading,
+    collectionBindingSubmitting,
+    collectionBindingArticleTitle,
+    collectionBindingValue,
+    collectionBindingOptions,
+    handleOpenCollectionBinding,
+    handleCloseCollectionBinding,
+    handleSaveCollectionBinding,
   }
 }

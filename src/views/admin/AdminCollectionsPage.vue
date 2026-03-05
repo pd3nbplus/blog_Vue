@@ -3,9 +3,12 @@ import { onMounted, reactive, ref } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import type { FormInstance } from 'ant-design-vue'
 import type { SelectValue } from 'ant-design-vue/es/select'
+import type { UploadProps } from 'ant-design-vue'
+import { UploadOutlined } from '@ant-design/icons-vue'
 
 import AppImage from '@/components/common/AppImage.vue'
 import { useFeedback } from '@/composables/useFeedback'
+import { uploadAdminMediaFile } from '@/services/api/admin'
 import { getAdminArticleList } from '@/services/api/adminArticle'
 import {
   createAdminCollection,
@@ -42,6 +45,7 @@ const formState = reactive<AdminCollectionPayload>({
 
 const articleOptions = ref<Array<{ label: string; value: number }>>([])
 const articleOptionsLoading = ref(false)
+const coverUploading = ref(false)
 const statusOptions = [
   { label: '全部', value: 'all' },
   { label: '置顶', value: 'pinned' },
@@ -133,6 +137,36 @@ async function openEdit(id: number) {
   } catch (error) {
     feedback.error(error, '加载合集详情失败')
   }
+}
+
+function buildUploadedMediaPath(path: string, name: string): string {
+  const normalizedPath = path.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+  const normalizedName = name.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+  if (!normalizedPath) return normalizedName
+  if (!normalizedName) return normalizedPath
+  return `${normalizedPath}/${normalizedName}`
+}
+
+async function uploadSelectedCover(file: File) {
+  if (coverUploading.value) return
+  coverUploading.value = true
+  try {
+    const result = await uploadAdminMediaFile({
+      path: 'temp/uploads/collection-cover',
+      file,
+    })
+    formState.cover_path = buildUploadedMediaPath(result.path, result.name)
+    feedback.success('封面上传成功')
+  } catch (error) {
+    feedback.error(error, '封面上传失败')
+  } finally {
+    coverUploading.value = false
+  }
+}
+
+const handleCoverBeforeUpload: UploadProps['beforeUpload'] = (file) => {
+  void uploadSelectedCover(file as File)
+  return false
 }
 
 async function handleSubmit() {
@@ -302,7 +336,23 @@ onMounted(async () => {
           <a-textarea v-model:value="formState.summary" :rows="3" />
         </a-form-item>
         <a-form-item label="封面路径">
-          <a-input v-model:value="formState.cover_path" placeholder="支持本地路径或外链 URL" />
+          <a-input v-model:value="formState.cover_path" placeholder="支持本地路径或外链 URL">
+            <template #addonAfter>
+              <a-upload :show-upload-list="false" :before-upload="handleCoverBeforeUpload" :max-count="1" accept="image/*">
+                <a-button type="link" size="small" :loading="coverUploading">
+                  <UploadOutlined />
+                  上传图片
+                </a-button>
+              </a-upload>
+            </template>
+          </a-input>
+          <AppImage
+            v-if="formState.cover_path"
+            :src="resolveCoverSrc(formState.cover_path)"
+            alt="collection-cover-preview"
+            class="collection-cover-preview"
+            fallback-src="/img/hero-image.jpg"
+          />
         </a-form-item>
         <a-row :gutter="12">
           <a-col :span="12">
@@ -424,5 +474,12 @@ onMounted(async () => {
 
 :deep(.ant-table-wrapper .ant-table-tbody > tr > td) {
   border-bottom: 1px solid var(--border);
+}
+
+.collection-cover-preview {
+  margin-top: 8px;
+  width: min(100%, 12rem);
+  border-radius: 6px;
+  border: 1px solid var(--border);
 }
 </style>

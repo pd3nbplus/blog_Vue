@@ -33,8 +33,16 @@ const latestUpdatesPageSize = 100
 const recommendationInitialPageSize = 12
 const recommendationScrollPageSize = 8
 const recommendationScrollThreshold = 180
+const backTopVisibleThreshold = 420
+const paperLatestCount = 5
+const paperLatestPageSize = 100
+const paperLatestMaxScanPages = 30
 let nonCriticalLoadTimer: number | null = null
 let nonCriticalIdleId: number | null = null
+const mobileHeroRatio = ref(16 / 9)
+const paperLatestArticles = ref<ArticleItem[]>([])
+const paperLatestLoaded = ref(false)
+const showMobileBackTop = ref(false)
 
 const latestArticles = computed(() =>
   [...(homeSummary.value?.latest_articles || [])]
@@ -50,6 +58,15 @@ const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
 const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/hero-image.webp')
+const homeShellStyle = computed(() => ({
+  '--mobile-hero-ratio': String(mobileHeroRatio.value || 16 / 9),
+}))
+const paperLatestDisplayArticles = computed(() => {
+  if (paperLatestLoaded.value && paperLatestArticles.value.length) {
+    return paperLatestArticles.value
+  }
+  return latestArticles.value.slice(0, paperLatestCount)
+})
 
 function toggleLike(): void {
   isLiked.value = !isLiked.value
@@ -113,6 +130,15 @@ function goToCategory(categoryId: number): void {
   void router.push({ name: 'category', params: { categoryId: category.id } })
 }
 
+function handleHeroImageLoad(event: Event): void {
+  const img = event.target as HTMLImageElement | null
+  if (!img) return
+  if (!img.naturalWidth || !img.naturalHeight) return
+  const ratio = img.naturalWidth / img.naturalHeight
+  if (!Number.isFinite(ratio) || ratio <= 0) return
+  mobileHeroRatio.value = ratio
+}
+
 async function loadCategories(): Promise<void> {
   if (categories.value.length) return
   try {
@@ -127,6 +153,14 @@ function isNearBottom(): boolean {
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
   const pageHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0
   return scrollTop + viewportHeight >= pageHeight - recommendationScrollThreshold
+}
+
+function getScrollTop(): number {
+  return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
+}
+
+function updateBackTopVisible(): void {
+  showMobileBackTop.value = getScrollTop() >= backTopVisibleThreshold
 }
 
 async function loadRecommendations(reset = false): Promise<void> {
@@ -172,6 +206,16 @@ function byPublishedAtDesc(a: ArticleItem, b: ArticleItem): number {
   return bTimestamp - aTimestamp
 }
 
+function byCreatedAtDesc(a: ArticleItem, b: ArticleItem): number {
+  const aTimestamp = a.created_at
+    ? Date.parse(a.created_at)
+    : (a.published_at ? Date.parse(a.published_at) : Number.NEGATIVE_INFINITY)
+  const bTimestamp = b.created_at
+    ? Date.parse(b.created_at)
+    : (b.published_at ? Date.parse(b.published_at) : Number.NEGATIVE_INFINITY)
+  return bTimestamp - aTimestamp
+}
+
 async function loadLatestUpdates(): Promise<void> {
   if (latestUpdatesLoaded.value) return
   const pinnedArticles: ArticleItem[] = []
@@ -212,6 +256,82 @@ async function loadLatestUpdates(): Promise<void> {
   }
 }
 
+function normalizeText(value?: string | null): string {
+  return String(value || '').trim().toLowerCase()
+}
+
+function matchesPaperCategory(category: CategoryItem): boolean {
+  const name = normalizeText(category.name)
+  const slug = normalizeText(category.slug)
+  if (name.includes('论文')) return true
+  if (name.includes('paper')) return true
+  if (slug.includes('paper')) return true
+  if (slug.includes('lunwen')) return true
+  return false
+}
+
+function findPaperCategoryId(tree: CategoryItem[]): number | null {
+  const queue: CategoryItem[] = [...tree]
+  const matchedTopLevel: CategoryItem[] = []
+  const matchedAny: CategoryItem[] = []
+
+  while (queue.length) {
+    const node = queue.shift()
+    if (!node) continue
+    if (matchesPaperCategory(node)) {
+      matchedAny.push(node)
+      if (node.level === 1) matchedTopLevel.push(node)
+    }
+    if (node.children?.length) {
+      queue.push(...node.children)
+    }
+  }
+
+  if (matchedTopLevel.length) return matchedTopLevel[0]?.id ?? null
+  return matchedAny[0]?.id ?? null
+}
+
+async function loadPaperLatestArticles(): Promise<void> {
+  if (paperLatestLoaded.value) return
+  try {
+    const categoryId = findPaperCategoryId(categories.value)
+    if (!categoryId) {
+      paperLatestArticles.value = latestArticles.value.slice(0, paperLatestCount)
+      paperLatestLoaded.value = true
+      return
+    }
+
+    const collected: ArticleItem[] = []
+    const seen = new Set<number>()
+    let page = 1
+    let numPages = 1
+
+    while (page <= numPages && page <= paperLatestMaxScanPages) {
+      const response = await getArticleList({
+        category: categoryId,
+        page,
+        page_size: paperLatestPageSize,
+      })
+      const pageData = response.data
+      numPages = Math.max(1, pageData.num_pages || 1)
+
+      for (const article of pageData.results || []) {
+        if (seen.has(article.id)) continue
+        seen.add(article.id)
+        collected.push(article)
+      }
+      page += 1
+    }
+
+    paperLatestArticles.value = collected.sort(byCreatedAtDesc).slice(0, paperLatestCount)
+    paperLatestLoaded.value = true
+  } catch (error) {
+    paperLatestArticles.value = latestArticles.value.slice(0, paperLatestCount)
+    paperLatestLoaded.value = true
+    feedback.error(error, '加载论文类最新文章失败')
+  }
+}
+
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   cancelIdleCallback?: (handle: number) => void
@@ -235,13 +355,21 @@ function queueNonCriticalLoads(): void {
 }
 
 function handleScroll(): void {
+  updateBackTopVisible()
   if (!isNearBottom()) return
   void loadRecommendations(false)
 }
 
+function scrollToTop(): void {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 onMounted(() => {
-  void loadCategories()
+  void loadCategories().then(() => {
+    void loadPaperLatestArticles()
+  })
   queueNonCriticalLoads()
+  updateBackTopVisible()
   window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
@@ -261,134 +389,147 @@ onBeforeUnmount(() => {
 
 <template>
   <a-spin :spinning="loading">
-    <div class="hero">
-      <div class="cover-layer">
-        <div class="motto-content">
-          <h2>想,&nbsp; 都是问题</h2>
-          <h2>&nbsp;</h2>
-          <h1>做,&nbsp; 才有答案</h1>
-          <h2>&nbsp;</h2>
-          <h2>站着不动，永远是观众！</h2>
-        </div>
-      </div>
-      <AppImage
-        :src="homeHeroSrc"
-        alt="Hero Image"
-        class="hero-image"
-        fallback-src="/img/hero-image.jpg"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-      />
-    </div>
-
-    <div class="main-content home-main-content">
-      <div class="column left-column">
-        <div class="personal-intro">
-          <div class="profile-image">
-            <AppImage :src="homeAvatarSrc" alt="Profile Image" fallback-src="/img/profile-image.png" />
+    <div class="home-page-shell" :style="homeShellStyle">
+      <div class="hero">
+        <div class="cover-layer">
+          <div class="motto-content">
+            <h2>想,&nbsp; 都是问题</h2>
+            <h2>&nbsp;</h2>
+            <h1>做,&nbsp; 才有答案</h1>
+            <h2>&nbsp;</h2>
+            <h2>站着不动，永远是观众！</h2>
           </div>
-          <h2>{{ homeDisplayName }}</h2>
-          <div class="stats">
-            <div>
-              <span>文章</span>
-              <span>{{ homeSummary?.stats.article_count ?? 0 }}</span>
-            </div>
-            <div>
-              <span>分类</span>
-              <span>{{ homeSummary?.stats.category_count ?? 0 }}</span>
-            </div>
-          </div>
-          <button class="like-btn" :class="{ liked: isLiked }" @click="toggleLike">
-            点个赞 <span class="heart-icon">♥</span>
-          </button>
         </div>
-
-        <div class="latest-articles">
-          <h2>Newest Paper Reading Article</h2>
-          <ul>
-            <li v-for="article in latestArticles" :key="article.id">
-              <ArticlePreviewCard
-                :article-id="article.id"
-                :cover-src="getCoverSrc(article.cover_path)"
-                :title="article.title"
-                :footer-info="`${articleCategory(article)} | ${formatDate(article.created_at)} | ${article.read_minutes} 分钟`"
-              />
-            </li>
-          </ul>
-        </div>
+        <AppImage
+          :src="homeHeroSrc"
+          alt="Hero Image"
+          class="hero-image"
+          fallback-src="/img/hero-image.jpg"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          @load="handleHeroImageLoad"
+        />
       </div>
 
-      <div class="column middle-column">
-        <div v-if="pinnedCollections.length" class="pinned-collections app-surface-card">
-          <div class="pinned-collections-header">
-            <h2>置顶合集</h2>
-            <span class="collection-section-pill">精选专题</span>
+      <div class="main-content home-main-content">
+        <div class="column left-column">
+          <div class="personal-intro">
+            <div class="profile-image">
+              <AppImage :src="homeAvatarSrc" alt="Profile Image" fallback-src="/img/profile-image.png" />
+            </div>
+            <h2>{{ homeDisplayName }}</h2>
+            <div class="stats">
+              <div>
+                <span>文章</span>
+                <span>{{ homeSummary?.stats.article_count ?? 0 }}</span>
+              </div>
+              <div>
+                <span>分类</span>
+                <span>{{ homeSummary?.stats.category_count ?? 0 }}</span>
+              </div>
+            </div>
+            <button class="like-btn" :class="{ liked: isLiked }" @click="toggleLike">
+              点个赞 <span class="heart-icon">♥</span>
+            </button>
           </div>
-          <ul>
-            <li v-for="collection in pinnedCollections" :key="collection.id">
-              <router-link :to="{ name: 'collection', params: { collectionId: collection.id } }" class="collection-card collection-link">
-                <AppImage
-                  :src="getCoverSrc(collection.cover_path)"
-                  :alt="collection.name"
-                  class="collection-cover"
-                  fallback-src="/img/background.jpg"
+
+          <div class="latest-articles">
+            <h2>Newest Paper Reading Article</h2>
+            <ul>
+              <li v-for="article in paperLatestDisplayArticles" :key="article.id">
+                <ArticlePreviewCard
+                  :article-id="article.id"
+                  :cover-src="getCoverSrc(article.cover_path)"
+                  :title="article.title"
+                  :footer-info="`${articleCategory(article)} | ${formatDate(article.created_at)} | ${article.read_minutes} 分钟`"
                 />
-                <div class="collection-main">
-                  <p class="collection-badge">Collection</p>
-                  <h3>{{ collection.name }}</h3>
-                  <p class="collection-summary">{{ collection.summary || '暂无合集概述' }}</p>
-                  <div class="collection-stats">
-                    <span>文章 {{ formatCount(collection.article_count) }}</span>
-                    <span>浏览 {{ formatCount(collection.total_views) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="column middle-column">
+          <div v-if="pinnedCollections.length" class="pinned-collections app-surface-card">
+            <div class="pinned-collections-header">
+              <h2>置顶合集</h2>
+              <span class="collection-section-pill">精选专题</span>
+            </div>
+            <ul>
+              <li v-for="collection in pinnedCollections" :key="collection.id">
+                <router-link :to="{ name: 'collection', params: { collectionId: collection.id } }" class="collection-card collection-link">
+                  <AppImage
+                    :src="getCoverSrc(collection.cover_path)"
+                    :alt="collection.name"
+                    class="collection-cover"
+                    fallback-src="/img/background.jpg"
+                  />
+                  <div class="collection-main">
+                    <p class="collection-badge">Collection</p>
+                    <h3>{{ collection.name }}</h3>
+                    <p class="collection-summary">{{ collection.summary || '暂无合集概述' }}</p>
+                    <div class="collection-stats">
+                      <span>文章 {{ formatCount(collection.article_count) }}</span>
+                      <span>浏览 {{ formatCount(collection.total_views) }}</span>
+                    </div>
+                    <span class="collection-entry">进入合集 →</span>
                   </div>
-                  <span class="collection-entry">进入合集 →</span>
-                </div>
-              </router-link>
-            </li>
-          </ul>
+                </router-link>
+              </li>
+            </ul>
+          </div>
+
+          <div class="popular-articles">
+            <h2>随机推荐文章</h2>
+            <ul>
+              <li v-for="article in recommendedArticles" :key="article.id">
+                <ArticlePreviewCard
+                  :article-id="article.id"
+                  :cover-src="getCoverSrc(article.cover_path)"
+                  :title="article.title"
+                  :date-text="formatDateTime(article.created_at)"
+                  :view-count="article.view_count"
+                  :read-minutes="article.read_minutes"
+                  :summary="article.summary || '暂无摘要'"
+                  :max-summary-length="80"
+                  :tag-name="articleCategory(article)"
+                  :tag-icon-src="articleCategoryIcon(article)"
+                />
+              </li>
+            </ul>
+            <p v-if="recommendationLoading" class="recommendation-tip">正在加载推荐...</p>
+            <p v-else-if="!recommendationHasMore" class="recommendation-tip">没有更多推荐了</p>
+          </div>
         </div>
 
-        <div class="popular-articles">
-          <h2>随机推荐文章</h2>
-          <ul>
-            <li v-for="article in recommendedArticles" :key="article.id">
-              <ArticlePreviewCard
-                :article-id="article.id"
-                :cover-src="getCoverSrc(article.cover_path)"
-                :title="article.title"
-                :date-text="formatDateTime(article.created_at)"
-                :view-count="article.view_count"
-                :read-minutes="article.read_minutes"
-                :summary="article.summary || '暂无摘要'"
-                :max-summary-length="80"
-                :tag-name="articleCategory(article)"
-                :tag-icon-src="articleCategoryIcon(article)"
-              />
-            </li>
-          </ul>
-          <p v-if="recommendationLoading" class="recommendation-tip">正在加载推荐...</p>
-          <p v-else-if="!recommendationHasMore" class="recommendation-tip">没有更多推荐了</p>
+        <div class="column right-column">
+          <div class="latest-updates">
+            <h2>最新动态</h2>
+            <ul>
+              <li v-for="update in latestUpdates" :key="update.id">
+                <span class="update-type" :class="{ 'update-type--edited': updateActivityLabel(update) === '新更新' }">
+                  {{ updateActivityLabel(update) }}
+                </span>
+                <router-link :to="{ name: 'article-detail', params: { id: update.id } }" class="update-title">
+                  {{ update.title }}
+                </router-link>
+              </li>
+            </ul>
+          </div>
+
+          <CategoryTreePanel :categories="categories" @select="goToCategory" />
         </div>
       </div>
 
-      <div class="column right-column">
-        <div class="latest-updates">
-          <h2>最新动态</h2>
-          <ul>
-            <li v-for="update in latestUpdates" :key="update.id">
-              <span class="update-type" :class="{ 'update-type--edited': updateActivityLabel(update) === '新更新' }">
-                {{ updateActivityLabel(update) }}
-              </span>
-              <router-link :to="{ name: 'article-detail', params: { id: update.id } }" class="update-title">
-                {{ update.title }}
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <CategoryTreePanel :categories="categories" @select="goToCategory" />
-      </div>
+      <button
+        v-if="showMobileBackTop"
+        type="button"
+        class="mobile-back-top"
+        aria-label="回到顶部"
+        @click="scrollToTop"
+      >
+        顶部
+      </button>
     </div>
   </a-spin>
 </template>
@@ -552,9 +693,85 @@ onBeforeUnmount(() => {
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
 }
 
+.mobile-back-top {
+  display: none;
+}
+
 @media screen and (max-width: 768px) {
+  .home-page-shell {
+    position: relative;
+    --mobile-hero-height: clamp(10.5rem, calc(100vw / var(--mobile-hero-ratio)), 19rem);
+    --mobile-intro-top: 33vh;
+  }
+
+  @supports (height: 100dvh) {
+    .home-page-shell {
+      --mobile-intro-top: 33dvh;
+    }
+  }
+
+  .home-page-shell .hero {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--mobile-hero-height);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .home-page-shell .cover-layer {
+    display: none;
+  }
+
+  .home-page-shell .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .home-page-shell .main-content {
+    position: relative;
+    z-index: 1;
+    margin-top: var(--mobile-intro-top);
+  }
+
+  .home-page-shell .right-column,
+  .home-page-shell .pinned-collections {
+    display: none;
+  }
+
+  .home-page-shell .left-column .personal-intro {
+    margin-top: 0;
+  }
+
   .home-main-content {
     width: min(100% - clamp(0.75rem, 4.2vw, 1.25rem), 100%);
+    margin: 0 auto 16px;
+  }
+
+  .mobile-back-top {
+    position: fixed;
+    right: 14px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+    background: color-mix(in srgb, var(--surface) 90%, var(--primary) 10%);
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
   }
 }
 </style>
