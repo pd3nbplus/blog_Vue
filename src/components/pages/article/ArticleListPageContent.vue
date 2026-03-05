@@ -212,7 +212,7 @@ onUnmounted(() => {
               <div class="card-header spotlight-card-header">
                 <h3>随机推荐文章</h3>
                 <button class="spotlight-refresh-btn" type="button" :disabled="spotlightLoading" @click.prevent="handleManualSpotlightRefresh">
-                  {{ spotlightLoading ? '刷新中...' : '随机刷新一篇' }}
+                  {{ spotlightLoading ? '刷新中...' : 'New blog' }}
                 </button>
               </div>
               <div class="spotlight-countdown">
