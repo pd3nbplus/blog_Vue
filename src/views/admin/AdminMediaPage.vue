@@ -111,7 +111,7 @@ const {
           <span>static</span>
         </button>
 
-        <div class="tree-list" v-if="treeRows.length">
+        <div v-if="treeRows.length" class="tree-list">
           <button
             v-for="row in treeRows"
             :key="row.path"
@@ -202,7 +202,7 @@ const {
           </div>
 
           <div v-else-if="viewMode === 'list'" class="list-view">
-            <table class="list-table" v-if="currentEntries.length">
+            <table v-if="currentEntries.length" class="list-table">
               <thead>
                 <tr>
                   <th>名称</th>
@@ -252,7 +252,7 @@ const {
             <div class="column-layout">
               <section v-for="path in columnPathChain" :key="path || '__root'" class="column-panel">
                 <header>{{ path ? getPathName(path) : 'static' }}</header>
-                <div class="column-content" v-if="directoryCache[path]">
+                <div v-if="directoryCache[path]" class="column-content">
                   <button
                     v-for="entry in getEntriesForPath(path)"
                     :key="entry.path"

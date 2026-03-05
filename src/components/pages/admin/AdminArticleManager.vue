@@ -240,12 +240,12 @@ function handleTableChange(
           :scroll="{ x: 1320 }"
           @change="handleTableChange"
         >
-          <a-table-column title="缩略图" key="cover" :width="100" fixed="left">
+          <a-table-column key="cover" title="缩略图" :width="100" fixed="left">
             <template #default="{ record }">
               <AppImage :src="getCoverSrc(record.cover_path)" alt="cover" class="thumb" fallback-src="/img/hero-image.jpg" />
             </template>
           </a-table-column>
-          <a-table-column title="文章" key="title" :width="350" :sorter="true" :sort-order="getSortOrder('title')">
+          <a-table-column key="title" title="文章" :width="350" :sorter="true" :sort-order="getSortOrder('title')">
             <template #default="{ record }">
               <div class="title-cell">
                 <h4>{{ record.title }}</h4>
@@ -254,7 +254,7 @@ function handleTableChange(
               </div>
             </template>
           </a-table-column>
-          <a-table-column title="分类（父-子）" key="categoryPath" :width="220">
+          <a-table-column key="categoryPath" title="分类（父-子）" :width="220">
             <template #default="{ record }">
               <span class="category-cell">
                 <span class="category-parent">{{ record.categoryDisplay.parent }}</span>
@@ -262,40 +262,40 @@ function handleTableChange(
               </span>
             </template>
           </a-table-column>
-          <a-table-column title="作者" key="author" :width="120">
+          <a-table-column key="author" title="作者" :width="120">
             <template #default="{ record }">
               {{ record.author?.username || '-' }}
             </template>
           </a-table-column>
-          <a-table-column title="状态" key="status" :width="108" :sorter="true" :sort-order="getSortOrder('status')">
+          <a-table-column key="status" title="状态" :width="108" :sorter="true" :sort-order="getSortOrder('status')">
             <template #default="{ record }">
               <a-tag :color="statusColor(record.status)">{{ statusLabel(record.status) }}</a-tag>
             </template>
           </a-table-column>
-          <a-table-column title="阅读" key="read_minutes" data-index="read_minutes" :width="90">
+          <a-table-column key="read_minutes" title="阅读" data-index="read_minutes" :width="90">
             <template #default="{ record }">
               {{ record.read_minutes }} 分钟
             </template>
           </a-table-column>
           <a-table-column
-            title="浏览量"
             key="view_count"
+            title="浏览量"
             data-index="view_count"
             :width="90"
             :sorter="true"
             :sort-order="getSortOrder('view_count')"
           />
-          <a-table-column title="发布时间" key="published_at" :width="170" :sorter="true" :sort-order="getSortOrder('published_at')">
+          <a-table-column key="published_at" title="发布时间" :width="170" :sorter="true" :sort-order="getSortOrder('published_at')">
             <template #default="{ record }">
               {{ formatDateTime(record.published_at) }}
             </template>
           </a-table-column>
-          <a-table-column title="更新时间" key="updated_at" :width="170" :sorter="true" :sort-order="getSortOrder('updated_at')">
+          <a-table-column key="updated_at" title="更新时间" :width="170" :sorter="true" :sort-order="getSortOrder('updated_at')">
             <template #default="{ record }">
               {{ formatDateTime(record.updated_at) }}
             </template>
           </a-table-column>
-          <a-table-column title="操作" key="actions" :width="270" fixed="right">
+          <a-table-column key="actions" title="操作" :width="270" fixed="right">
             <template #default="{ record }">
               <a-space>
                 <a-button size="small" type="primary" ghost @click="handleEdit(record.id)">编辑</a-button>

@@ -119,9 +119,7 @@ export function useArticleListPage(): UseArticleListPageResult {
       return {
         name: 'category',
         params: { categoryId },
-        query: {
-          ...(safePage ? { page: safePage } : {}),
-        },
+        query: (safePage ? { page: safePage } : {}),
       }
     }
 
@@ -153,9 +151,7 @@ export function useArticleListPage(): UseArticleListPageResult {
       await router.push({
         name: 'category',
         params: { categoryId: category },
-        query: {
-          ...(currentPage > 1 ? { page: String(currentPage) } : {}),
-        },
+        query: (currentPage > 1 ? { page: String(currentPage) } : {}),
       })
       return
     }

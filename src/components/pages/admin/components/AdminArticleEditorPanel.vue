@@ -103,8 +103,8 @@ const {
               :show-search="false"
               tree-expand-action="click"
               placeholder="先点击一级分类，再选择二级分类"
-              @dropdownVisibleChange="handleCategoryDropdownVisibleChange"
-              @treeExpand="handleCategoryTreeExpand"
+              @dropdown-visible-change="handleCategoryDropdownVisibleChange"
+              @tree-expand="handleCategoryTreeExpand"
             />
           </a-form-item>
         </div>
