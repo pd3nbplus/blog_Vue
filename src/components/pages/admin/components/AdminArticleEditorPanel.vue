@@ -143,21 +143,26 @@ const {
 
         <div class="editor-columns">
           <section class="editor-column">
-            <a-form-item label="Markdown 正文" name="markdown_content">
-              <div class="upload-line">
-                <a-upload
-                  :file-list="markdownUploadList"
-                  :before-upload="handleMarkdownBeforeUpload"
-                  :max-count="1"
-                  accept=".md,.markdown,.txt,.html,.htm"
-                  @remove="handleMarkdownRemove"
-                >
-                  <a-button size="small" :loading="markdownFileUploading">
-                    <UploadOutlined />
-                    选择 Markdown
-                  </a-button>
-                </a-upload>
-              </div>
+            <a-form-item name="markdown_content">
+              <template #label>
+                <div class="markdown-label-row">
+                  <span>Markdown 正文</span>
+                  <div class="upload-line upload-line--inline">
+                    <a-upload
+                      :file-list="markdownUploadList"
+                      :before-upload="handleMarkdownBeforeUpload"
+                      :max-count="1"
+                      accept=".md,.markdown,.txt,.html,.htm"
+                      @remove="handleMarkdownRemove"
+                    >
+                      <a-button size="small" :loading="markdownFileUploading">
+                        <UploadOutlined />
+                        选择 Markdown
+                      </a-button>
+                    </a-upload>
+                  </div>
+                </div>
+              </template>
               <a-textarea
                 ref="markdownTextareaRef"
                 v-model:value="formState.markdown_content"

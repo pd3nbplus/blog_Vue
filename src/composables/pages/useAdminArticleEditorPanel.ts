@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import type { Rule } from 'ant-design-vue/es/form'
@@ -168,7 +168,7 @@ export function useAdminArticleEditorPanel(
     const now = new Date()
     const dateDir = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
     const safeStem = sanitizeFileStemForPath(filename)
-    return `/media/articles/uploads/${dateDir}/${safeStem}.md`
+    return `/static/temp/uploads/${dateDir}/${safeStem}.md`
   }
   async function readTextFromFile(file: File): Promise<string> {
     return file.text()
@@ -178,6 +178,8 @@ export function useAdminArticleEditorPanel(
     try {
       const text = await readTextFromFile(file)
       formState.markdown_content = text
+      await nextTick()
+      formRef.value?.clearValidate?.(['markdown_content'])
       if (!formState.source_markdown_path.trim()) {
         formState.source_markdown_path = inferSourceMarkdownPath(file.name)
       }
