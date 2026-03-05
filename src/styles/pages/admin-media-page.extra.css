@@ -45,6 +45,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
+  color: var(--text);
   padding: 12px;
   cursor: pointer;
   display: inline-flex;
@@ -181,4 +182,69 @@
   .list-table td {
     padding: 8px;
   }
+}
+
+.media-page {
+  color: var(--text);
+}
+
+.media-page :deep(.ant-btn-default) {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.media-page :deep(.ant-btn-default:not(:disabled):hover),
+.media-page :deep(.ant-btn-default:not(:disabled):focus) {
+  color: var(--text);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--surface-2) 72%, var(--surface));
+}
+
+.media-page :deep(.ant-btn-primary) {
+  color: var(--btn-text-on-primary);
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.media-page :deep(.ant-btn-primary:not(:disabled):hover),
+.media-page :deep(.ant-btn-primary:not(:disabled):focus) {
+  color: var(--btn-text-on-primary);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 86%, var(--surface));
+}
+
+.media-page :deep(.ant-btn.ant-btn-loading),
+.media-page :deep(.ant-btn:disabled) {
+  color: color-mix(in srgb, var(--muted) 86%, var(--text));
+  border-color: var(--border);
+}
+
+.media-page :deep(.ant-upload-list-item) {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 66%, var(--surface));
+}
+
+.media-page :deep(.ant-upload-list-item-name),
+.media-page :deep(.ant-upload-list-item-card-actions-btn),
+.media-page :deep(.ant-upload-list-item .anticon) {
+  color: var(--text) !important;
+}
+
+.media-page :deep(.ant-upload-list-item-card-actions-btn:hover),
+.media-page :deep(.ant-upload-list-item-name:hover) {
+  color: var(--primary) !important;
+}
+
+.media-page :deep(.ant-empty-description),
+.media-page :deep(.ant-spin-text) {
+  color: var(--muted) !important;
+}
+
+.media-page :deep(.ant-spin-dot-item) {
+  background-color: var(--primary);
+}
+
+.media-page :deep(.anticon-folder) {
+  color: var(--primary);
 }
