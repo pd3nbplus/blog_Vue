@@ -43,7 +43,7 @@ const pinnedCollections = computed<CollectionItem[]>(() => (homeSummary.value?.p
 const siteProfile = computed(() => homeSummary.value?.site_profile)
 const homeDisplayName = computed(() => siteProfile.value?.display_name || 'pdnbplus')
 const homeAvatarSrc = computed(() => resolveTempAsset(siteProfile.value?.home_avatar_path) || '/img/profile-image.png')
-const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/background.jpg')
+const homeHeroSrc = computed(() => resolveTempAsset(siteProfile.value?.home_hero_path) || '/img/hero-image.webp')
 
 function isOpened(id: number): boolean {
   return openedCategories.value.includes(id)
@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
         :src="homeHeroSrc"
         alt="Hero Image"
         class="hero-image"
-        fallback-src="/img/background.jpg"
+        fallback-src="/img/hero-image.jpg"
         loading="eager"
         fetchpriority="high"
         decoding="async"
