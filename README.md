@@ -6,7 +6,7 @@
 
 ![后台页面示意](image-1.png)
 
-## 1. 项目简介（面向使用者）
+## 1. 📌 项目简介（面向使用者）
 
 这是一个博客系统前端，包含两部分：
 
@@ -19,7 +19,7 @@
 - 后台首页：`/admin/dashboard/`
 - 后台登录：`/admin/login/`
 
-## 2. 快速开始（面向开发者）
+## 2. 🚀 快速开始（面向开发者）
 
 1. 安装依赖
 
@@ -41,7 +41,7 @@ npm run dev
 
 默认端口：`5174`
 
-## 3. 常用命令
+## 3. 🛠️ 常用命令
 
 ```bash
 npm run dev          # 本地开发
@@ -64,21 +64,35 @@ npm run test:e2e     # Playwright
 - 其他核心依赖：`axios`、`markdown-it`、`katex`、`dompurify`
 - 工程链路：`eslint + oxlint + prettier + vue-tsc + vitest + playwright`
 
-## 5. 目录与职责（可扩展基线）
+## 5. 🧱 目录与职责（可扩展基线）
 
 ```text
 src/
-├── components/                 # 可复用组件（common/layout/pages）
-├── composables/                # 组合式逻辑（含 pages/ 页面逻辑）
-├── config/                     # 环境与配置封装
-├── layouts/                    # 布局壳（DefaultLayout/AdminLayout）
-├── router/                     # 路由与守卫
-├── services/                   # HTTP 实例 + API 服务层
-├── stores/                     # Pinia 模块状态
-├── styles/                     # 全局、legacy、页面样式
-├── types/                      # 类型定义
-├── utils/                      # 通用工具
-└── views/                      # 页面入口（按业务域）
+├── __tests__/                  # 测试文件
+├── components/                 # 可复用组件
+│   ├── common/                 # 通用展示组件（卡片、图片、树等）
+│   ├── layout/                 # 历史布局组件（当前基本已弃用）
+│   └── pages/                  # 按业务域拆分的页面子组件
+├── composables/                # 组合式逻辑
+│   └── pages/                  # 页面级逻辑 hooks（useXxxPage）
+├── config/                     # 环境与运行配置
+├── layouts/                    # 路由布局壳（Default/Admin）
+├── router/                     # 路由表、路由入口、路由守卫
+├── services/                   # 请求封装与接口服务
+│   └── api/                    # 按业务域拆分 API
+├── stores/                     # Pinia 状态管理
+│   └── modules/                # 业务模块 store
+├── styles/                     # 样式体系
+│   ├── legacy/                 # 兼容历史页面样式
+│   └── pages/                  # 页面级样式补充
+├── types/                      # TS 类型定义（接口/DTO/业务模型）
+├── utils/                      # 工具函数与基础能力
+└── views/                      # 路由页面入口
+    ├── admin/                  # 后台页面
+    ├── article/                # 文章域页面
+    ├── collection/             # 合集域页面
+    ├── home/                   # 首页
+    └── user/                   # 用户域页面
 ```
 
 推荐的新增功能落位规则：
@@ -90,7 +104,7 @@ src/
 - 可复用业务组件：`components/pages/<domain>/...`
 - 若存在跨页面状态：`stores/modules/<domain>.ts`
 
-## 6. 运行时架构约定
+## 6. 🧩 运行时架构约定
 
 - 仅使用 Composition API（`<script setup lang="ts">`）。
 - 路由定义集中在 `router/routes.ts`，页面组件全部懒加载。
@@ -99,7 +113,101 @@ src/
 - 主题能力由 `composables/useTheme.ts` 管理，入口在 `main.ts` 初始化。
 - 动态 favicon 由 `composables/useDynamicFavicon.ts` 在入口初始化。
 
-## 7. 与《前端开发指南》对齐状态（截至 2026-03-06）
+### 6.1 🗂️ 文章列表功能应该写到哪里（示例）
+
+以“文章列表页”这条链路为例，推荐固定分层：
+
+- 路由入口：`src/router/routes.ts`
+- 页面壳组件：`src/views/article/ArticleListPage.vue`
+- 页面展示组件：`src/components/pages/article/ArticleListPageContent.vue`
+- 页面逻辑组合式函数：`src/composables/pages/useArticleListPage.ts`
+- 状态管理：`src/stores/modules/article.ts`
+- 接口层：`src/services/api/article.ts`
+- 类型定义：`src/types/article.ts`
+
+### 6.2 🔧 开发流程示例（逻辑、接口、状态）
+
+1. 先定义接口和类型
+
+```ts
+// src/services/api/article.ts
+export interface ArticleListQuery {
+  page?: number
+  page_size?: number
+  q?: string
+  category?: number
+}
+
+export async function getArticleList(params: ArticleListQuery) {
+  const { data } = await request.get('/articles/', { params })
+  return data
+}
+```
+
+2. 在 store 中封装“可复用状态 + 拉取动作”
+
+```ts
+// src/stores/modules/article.ts
+export const useArticleStore = defineStore('article', () => {
+  const list = ref<ArticleItem[]>([])
+  const total = ref(0)
+  const page = ref(1)
+  const pageSize = ref(10)
+
+  async function fetchArticleList(params: ArticleListQuery = {}): Promise<void> {
+    const res = await getArticleList(params)
+    list.value = res.data.results
+    total.value = res.data.count
+    page.value = res.data.page
+    pageSize.value = res.data.page_size
+  }
+
+  return { list, total, page, pageSize, fetchArticleList }
+})
+```
+
+3. 在 composable 中处理路由参数、筛选和分页行为
+
+```ts
+// src/composables/pages/useArticleListPage.ts
+export function useArticleListPage() {
+  const route = useRoute()
+  const router = useRouter()
+  const articleStore = useArticleStore()
+
+  async function fetchList(currentPage = 1): Promise<void> {
+    await articleStore.fetchArticleList({ page: currentPage })
+  }
+
+  function handlePageChange(currentPage: number): void {
+    void router.push({ name: 'article-list', query: { page: String(currentPage) } })
+  }
+
+  return { fetchList, handlePageChange }
+}
+```
+
+4. 页面组件只负责装配，尽量不堆业务逻辑
+
+```vue
+<!-- src/views/article/ArticleListPage.vue -->
+<script setup lang="ts">
+import ArticleListPageContent from '@/components/pages/article/ArticleListPageContent.vue'
+</script>
+
+<template>
+  <ArticleListPageContent />
+</template>
+```
+
+这套分层的目标：
+
+- `services` 关注“怎么请求”。
+- `store` 关注“共享状态和领域动作”。
+- `composable` 关注“页面交互与路由联动”。
+- `view/component` 关注“渲染和交互绑定”。
+
+## 7. ✅ 与《前端开发指南》对齐状态（截至 2026-03-06）
 
 已对齐：
 
@@ -129,7 +237,7 @@ src/
 3. 为高频业务模块补齐单元测试基线（优先 composables 与 services）。
 4. 继续收敛 `legacy` 样式，拆分为按域样式文件。
 
-## 8. 后续开发流程（建议）
+## 8. 📋 后续开发流程（建议）
 
 1. 先定义类型：`types/<domain>.ts`。
 2. 再实现服务：`services/api/<domain>.ts`。
