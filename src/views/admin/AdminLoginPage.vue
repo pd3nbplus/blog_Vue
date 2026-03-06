@@ -69,7 +69,7 @@ function handleThemeChange(event: Event): void {
         </div>
       </div>
       <div class="login-image">
-        <img src="/img/background.jpg" alt="Login Image" />
+        <img src="/img/登录页.png" alt="登录页展示图" />
       </div>
     </div>
   </div>
@@ -119,36 +119,26 @@ function handleThemeChange(event: Event): void {
 }
 
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(20rem, 1fr) minmax(22rem, 1.1fr);
   background: var(--surface);
   border-radius: 15px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border);
   overflow: hidden;
-  width: min(100%, 56rem);
+  width: min(100%, 64rem);
   min-height: 60vh;
 }
 
 .login-form,
 .login-image {
-  flex: 1 1 21rem;
-  min-width: min(100%, 18rem);
   height: 100%;
 }
 
-.login-image {
-  flex: 1.2 1 24rem;
-  min-width: min(100%, 16rem);
-}
-
 .login-form {
-  padding: 20px;
+  padding: 28px 24px;
   background-color: var(--surface-2);
   color: var(--text);
-  border-top-left-radius: 15px;
-  border-bottom-left-radius: 15px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -210,7 +200,7 @@ function handleThemeChange(event: Event): void {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.2;
+  display: block;
 }
 
 .login-form .copyright {
@@ -225,7 +215,7 @@ function handleThemeChange(event: Event): void {
 
 @media (max-width: 900px) {
   .login-container {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     min-height: auto;
   }
 

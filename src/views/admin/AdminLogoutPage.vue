@@ -9,7 +9,7 @@ const userStore = useUserStore()
 
 onMounted(async () => {
   await userStore.doLogout()
-  await router.replace({ name: 'admin-login' })
+  await router.replace({ name: 'home' })
 })
 </script>
 

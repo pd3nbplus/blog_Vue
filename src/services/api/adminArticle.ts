@@ -83,13 +83,13 @@ export async function resolveAdminArticleLocalImages(payload: ResolveLocalImages
 
 export async function uploadAdminArticleMarkdown(payload: {
   file: File
-  source_markdown_path?: string
+  title: string
+  category?: number | null
 }): Promise<{ markdown_content: string; source_markdown_path: string; saved_to: string }> {
   const formData = new FormData()
   formData.append('markdown_file', payload.file, payload.file.name)
-  if (payload.source_markdown_path) {
-    formData.append('source_markdown_path', payload.source_markdown_path)
-  }
+  formData.append('title', payload.title)
+  if (payload.category !== undefined && payload.category !== null) formData.append('category', String(payload.category))
   return requestData<{ markdown_content: string; source_markdown_path: string; saved_to: string }>(
     request.post('/admin/articles/upload-markdown/', formData, {
       headers: {
@@ -101,13 +101,13 @@ export async function uploadAdminArticleMarkdown(payload: {
 
 export async function uploadAdminArticleCover(payload: {
   file: File
-  source_markdown_path?: string
+  title: string
+  category?: number | null
 }): Promise<{ cover_path: string; saved_to: string }> {
   const formData = new FormData()
   formData.append('cover_file', payload.file, payload.file.name)
-  if (payload.source_markdown_path) {
-    formData.append('source_markdown_path', payload.source_markdown_path)
-  }
+  formData.append('title', payload.title)
+  if (payload.category !== undefined && payload.category !== null) formData.append('category', String(payload.category))
   return requestData<{ cover_path: string; saved_to: string }>(
     request.post('/admin/articles/upload-cover/', formData, {
       headers: {

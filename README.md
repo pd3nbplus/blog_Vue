@@ -1,46 +1,39 @@
 # blog_vue Frontend
 
-基于 `Vue 3 + TypeScript + Pinia + Vue Router + Ant Design Vue` 的博客前端工程，包含门户站点与后台管理。
+博客前端工程（门户 + 后台管理），基于 `Vue 3 + TypeScript + Pinia + Vue Router + Ant Design Vue`。
 
-![alt text](image.png)
+## 1. 项目定位
 
-![alt text](image-1.png)
+- 门户能力：首页、文章列表、文章详情、分类、合集、搜索。
+- 后台能力：仪表盘、文章/分类/评论/合集、媒体库、日志、个人设置。
+- 工程目标：类型安全、模块化可扩展、可回归的构建与测试链路。
 
-## 项目目标
-
-- 门户：首页、文章列表、文章详情、合集、搜索。
-- 后台：文章/分类/评论/合集/媒体库/日志/个人设置管理。
-- 工程：类型安全、路由分层、服务层封装、主题化样式、构建优化。
-
-## 当前技术栈
+## 2. 技术栈与版本
 
 - `vue@3.5.x`
-- `typescript@5.9.x`（`strict: true`）
+- `typescript@5.9.x`（`strict: true` + `noUncheckedIndexedAccess: true`）
 - `vite@7.x`
 - `vue-router@4.x`
 - `pinia@3.x`
-- `ant-design-vue@4.x`（按需加载）
-- `axios`、`markdown-it`、`katex`
-- `eslint + oxlint + prettier + vue-tsc`
-- `vitest + playwright`
+- `ant-design-vue@4.x`（`unplugin-vue-components` 自动按需注册）
+- 其他核心依赖：`axios`、`markdown-it`、`katex`、`dompurify`
+- 工程链路：`eslint + oxlint + prettier + vue-tsc + vitest + playwright`
 
-## 快速开始
+## 3. 快速开始
 
-### 1. 安装依赖
+1. 安装依赖
 
 ```bash
 npm install
 ```
 
-### 2. 配置环境变量
-
-创建 `.env.development`（可参考 `.env.example`）：
+2. 配置环境变量（参考 `.env.example`）
 
 ```bash
-VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1
+VITE_API_BASE_URL=/api/v1
 ```
 
-### 3. 启动开发
+3. 启动开发
 
 ```bash
 npm run dev
@@ -48,94 +41,91 @@ npm run dev
 
 默认端口：`5174`
 
-## 常用命令
+## 4. 常用命令
 
 ```bash
 npm run dev          # 本地开发
 npm run lint         # oxlint + eslint
 npm run type-check   # vue-tsc
 npm run build-only   # 仅构建
-npm run build        # 先 type-check 再构建
+npm run build        # type-check + build
 npm run test:unit    # Vitest
 npm run test:e2e     # Playwright
 ```
 
-## 当前目录结构（简版）
+## 5. 目录与职责（可扩展基线）
 
 ```text
 src/
-├── components/
-│   ├── common/
-│   ├── layout/
-│   └── pages/
-├── composables/
-│   └── pages/
-├── config/
-├── layouts/
-├── router/
-├── services/
-│   └── api/
-├── stores/
-│   └── modules/
-├── styles/
-│   ├── global.css
-│   ├── legacy/
-│   └── pages/
-├── types/
-├── utils/
-└── views/
-    ├── admin/
-    ├── article/
-    ├── collection/
-    ├── home/
-    └── user/
+├── components/                 # 可复用组件（common/layout/pages）
+├── composables/                # 组合式逻辑（含 pages/ 页面逻辑）
+├── config/                     # 环境与配置封装
+├── layouts/                    # 布局壳（DefaultLayout/AdminLayout）
+├── router/                     # 路由与守卫
+├── services/                   # HTTP 实例 + API 服务层
+├── stores/                     # Pinia 模块状态
+├── styles/                     # 全局、legacy、页面样式
+├── types/                      # 类型定义
+├── utils/                      # 通用工具
+└── views/                      # 页面入口（按业务域）
 ```
 
-## 架构约定
+推荐的新增功能落位规则：
 
-- 组件使用 `<script setup lang="ts">` + Composition API。
-- API 调用通过 `services/api/*`，请求实例在 `services/http.ts`。
-- 跨模块状态通过 Pinia（`stores/modules/*`）。
-- 路由集中在 `router/routes.ts`，并使用懒加载。
-- 全局主题变量在 `styles/global.css`，页面样式分 `legacy` 与 `pages`。
+- 新页面：`views/<domain>/<Page>.vue`
+- 页面复杂逻辑：`composables/pages/use<Page>.ts`
+- 接口调用：`services/api/<domain>.ts`
+- 类型：`types/<domain>.ts`
+- 可复用业务组件：`components/pages/<domain>/...`
+- 若存在跨页面状态：`stores/modules/<domain>.ts`
 
-## 与《前端开发指南》对齐状态（截至 2026-03-05）
+## 6. 运行时架构约定
 
-### 已对齐
+- 仅使用 Composition API（`<script setup lang="ts">`）。
+- 路由定义集中在 `router/routes.ts`，页面组件全部懒加载。
+- 鉴权在 `router/guards.ts`：后台路由统一校验登录态。
+- HTTP 统一走 `services/http.ts`（注入 token、统一错误处理）。
+- 主题能力由 `composables/useTheme.ts` 管理，入口在 `main.ts` 初始化。
+- 动态 favicon 由 `composables/useDynamicFavicon.ts` 在入口初始化。
 
-- TypeScript 严格模式已开启（`tsconfig.app.json`）。
-- 全站使用 Composition API（无 Options API 组件）。
-- 路由组件懒加载（`routes.ts`）。
-- Ant Design Vue 按需加载（`unplugin-vue-components`）。
-- 构建前执行类型检查（`npm run build`）。
-- Vite 已配置 `manualChunks` + `cssCodeSplit`。
-- 首页首屏 Hero 图片已使用 WebP 并预加载（`index.html`）。
+## 7. 与《前端开发指南》对齐状态（截至 2026-03-06）
 
-### 待继续对齐
+已对齐：
 
-- 样式入口仍为 `styles/global.css`，指南目标是 `styles/global.scss`。
-- 多个页面样式块仍未 `scoped`（当前存在于 `DefaultLayout`、`HomePageContent`、`ArticleListPageContent`、`CollectionPageContent`、`ArticleDetailPageContent`）。
-- ESLint 当前使用 `vue flat/essential`，不是指南中的 `vue3-recommended` 目标级别。
-- `.vue` 文件中的 `explicit-function-return-type` 仍为关闭状态（见 `eslint.config.ts` 的 `app/vue-sfc-rules`）。
+- TypeScript 严格模式开启（`tsconfig.app.json`）。
+- 全项目使用 Composition API，无 Options API。
+- 路由懒加载（`src/router/routes.ts`）。
+- Ant Design Vue 按需加载（`vite.config.ts` + resolver）。
+- 构建前强制类型检查（`npm run build` -> `vue-tsc --build`）。
+- Vite 已启用 `cssCodeSplit` 与 `manualChunks` 分包策略。
+- ESLint 已启用：
+  - `@typescript-eslint/no-explicit-any`
+  - `@typescript-eslint/explicit-function-return-type`（含 `.vue`）
+  - `vue/require-explicit-emits`
 
-## 代码规范执行要点
+部分对齐（仍需演进）：
 
-- 禁止 `any/unknown`（由 ESLint 规则兜底）。
-- 列表渲染必须带稳定 `:key`。
-- 高频事件（如 `scroll`）应使用节流/防抖或 `requestAnimationFrame`。
-- 涉及 `v-html` 的页面需注明安全边界并做内容清洗。
+- 样式体系仍以 `styles/global.css` 为入口，尚未切换到 SCSS 体系。
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖）：
+  - `src/layouts/DefaultLayout.vue`
+  - `src/components/pages/home/HomePageContent.vue`
+  - `src/components/pages/article/ArticleListPageContent.vue`
+  - `src/components/pages/article/ArticleDetailPageContent.vue`
+  - `src/components/pages/collection/CollectionPageContent.vue`
 
-## 后端接口（主要）
+建议的下一步对齐顺序：
 
-- 门户：`/home/summary/`、`/articles/`、`/articles/{id}/`、`/categories/tree/`、`/collections/`
-- 认证：`/auth/login/`、`/auth/logout/`、`/auth/profile/`
-- 后台：文章/分类/评论/合集/媒体库/日志相关管理接口
+1. 增加非 `scoped` 样式白名单注释规范（说明原因与影响范围）。
+2. 逐步引入 `styles/*.scss` 并迁移变量/混入层。
+3. 为高频业务模块补齐单元测试基线（优先 composables 与 services）。
+4. 继续收敛 `legacy` 样式，拆分为按域样式文件。
 
-## 建议工作流
+## 8. 后续开发流程（建议）
 
-1. 开发前先同步接口类型到 `types/*` 与 `services/api/*`。
-2. 页面复杂逻辑优先沉淀到 `composables/pages/*`。
-3. 提交前至少执行：
+1. 先定义类型：`types/<domain>.ts`。
+2. 再实现服务：`services/api/<domain>.ts`。
+3. 页面逻辑落 `composables/pages`，视图组件保持轻量。
+4. 提交前最少执行：
 
 ```bash
 npm run lint
@@ -143,5 +133,7 @@ npm run type-check
 npm run build-only
 ```
 
-4. PR 中说明：影响模块、回归点、是否涉及样式全局影响。
-
+5. PR 描述必须包含：
+- 影响范围（门户/后台、具体页面）
+- 接口与类型变更点
+- 回归点（登录态、路由守卫、主题切换、移动端样式）

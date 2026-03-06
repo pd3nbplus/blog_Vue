@@ -147,13 +147,28 @@ function buildUploadedMediaPath(path: string, name: string): string {
   return `${normalizedPath}/${normalizedName}`
 }
 
+function sanitizeCollectionNameForFileName(name: string): string {
+  const value = (name || '').trim().replace(/[\\/]/g, '_')
+  if (!value || value === '.' || value === '..') return 'collection'
+  return value
+}
+
 async function uploadSelectedCover(file: File): Promise<void> {
   if (coverUploading.value) return
+  if (!formState.name.trim()) {
+    feedback.error('请先填写合集名称')
+    return
+  }
+  const collectionName = sanitizeCollectionNameForFileName(formState.name)
+  const suffix = (file.name.split('.').pop() || '').trim().toLowerCase()
+  const filename = suffix ? `${collectionName}.${suffix}` : collectionName
   coverUploading.value = true
   try {
     const result = await uploadAdminMediaFile({
       path: 'temp/uploads/collection-cover',
       file,
+      filename,
+      overwrite: true,
     })
     formState.cover_path = buildUploadedMediaPath(result.path, result.name)
     feedback.success('封面上传成功')

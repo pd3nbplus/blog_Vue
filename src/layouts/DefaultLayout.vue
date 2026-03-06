@@ -86,6 +86,7 @@ onMounted(() => {
           <router-link :to="{ name: 'home' }">主页</router-link>
           <router-link :to="categoryNavTarget">文章分类</router-link>
           <router-link :to="featuredCollectionNavTarget">精选合集</router-link>
+          <router-link to="/admin/dashboard/">Admin</router-link>
         </div>
         <div class="navbar-search">
           <a-input-search

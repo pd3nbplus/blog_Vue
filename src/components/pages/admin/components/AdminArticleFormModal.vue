@@ -244,7 +244,8 @@ async function handleMarkdownFileUpload(): Promise<void> {
   try {
     const data = await uploadAdminArticleMarkdown({
       file,
-      source_markdown_path: formState.source_markdown_path.trim() || undefined,
+      title: formState.title.trim(),
+      category: formState.category ?? null,
     })
     formState.markdown_content = data.markdown_content
     formState.source_markdown_path = data.source_markdown_path
@@ -286,7 +287,8 @@ async function handleCoverFileUpload(): Promise<void> {
   try {
     const data = await uploadAdminArticleCover({
       file,
-      source_markdown_path: formState.source_markdown_path.trim() || undefined,
+      title: formState.title.trim(),
+      category: formState.category ?? null,
     })
     formState.cover_path = data.cover_path
     message.success('封面图片上传成功')

@@ -57,7 +57,6 @@ const {
   selectedLocalFiles,
   localImageMatchResult,
   localImageMatchStats,
-  sourceMarkdownPathMissingForUpload,
   handleLocalFilesBeforeUpload,
   handleLocalDirectoryBeforeUpload,
   clearSelectedLocalFiles,
@@ -114,9 +113,6 @@ const {
         </a-form-item>
 
         <div class="asset-grid">
-          <a-form-item label="来源 Markdown 路径" class="asset-item">
-            <a-input v-model:value="formState.source_markdown_path" placeholder="例如：深度学习/NLP/xxx.md" />
-          </a-form-item>
           <a-form-item label="封面路径" class="asset-item">
             <a-input v-model:value="formState.cover_path" placeholder="可填本地路径或外链 URL">
               <template #addonAfter>
@@ -228,9 +224,6 @@ const {
       已选择 {{ selectedLocalFiles.length }} 个文件
       （已匹配 {{ localImageMatchStats.matched }}，未匹配 {{ localImageMatchStats.unmatched }}，冲突
       {{ localImageMatchStats.ambiguous }}）
-    </p>
-    <p v-if="sourceMarkdownPathMissingForUpload" class="mapping-warning">
-      已匹配到图片，但“来源 Markdown 路径”为空，暂不可上传，请先补全该字段。
     </p>
     <div class="ref-list">
       <p>本次检测结果：</p>

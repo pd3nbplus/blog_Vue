@@ -263,18 +263,6 @@ export function useAdminArticleEditorPanel(
     const normalized = filename.split('/').pop()?.split('\\').pop() || filename
     return normalized.replace(/\.[^./\\]+$/, '').trim()
   }
-  function sanitizeFileStemForPath(filename: string): string {
-    const stem = extractMarkdownBaseName(filename)
-    const lowered = stem.toLowerCase().trim()
-    const sanitized = lowered.replace(/[^a-z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
-    return sanitized || 'article'
-  }
-  function inferSourceMarkdownPath(filename: string): string {
-    const now = new Date()
-    const dateDir = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
-    const safeStem = sanitizeFileStemForPath(filename)
-    return `/static/temp/uploads/${dateDir}/${safeStem}.md`
-  }
   async function readTextFromFile(file: File): Promise<string> {
     return file.text()
   }
@@ -285,9 +273,6 @@ export function useAdminArticleEditorPanel(
       formState.markdown_content = text
       await nextTick()
       formRef.value?.clearValidate?.(['markdown_content'])
-      if (!formState.source_markdown_path.trim()) {
-        formState.source_markdown_path = inferSourceMarkdownPath(file.name)
-      }
       if (!formState.title.trim()) {
         const inferredTitle = extractMarkdownBaseName(file.name)
         if (inferredTitle) {
@@ -357,7 +342,8 @@ export function useAdminArticleEditorPanel(
     try {
       const data = await uploadAdminArticleCover({
         file,
-        source_markdown_path: payload.source_markdown_path.trim() || undefined,
+        title: payload.title.trim(),
+        category: payload.category,
       })
       payload.cover_path = data.cover_path
       formState.cover_path = data.cover_path
@@ -397,12 +383,6 @@ export function useAdminArticleEditorPanel(
       ambiguous: result.ambiguousRefs.length,
     }
   })
-  const sourceMarkdownPathMissingForUpload = computed(() => {
-    const payload = pendingSubmitPayload.value
-    if (!payload) return false
-    if (localImageMatchResult.value.mappings.length <= 0) return false
-    return !payload.source_markdown_path.trim()
-  })
   function getPreviewStatusText(status: 'matched' | 'unmatched' | 'ambiguous'): string {
     if (status === 'matched') return '已匹配'
     if (status === 'ambiguous') return '匹配冲突'
@@ -429,7 +409,7 @@ export function useAdminArticleEditorPanel(
       slug: formState.slug.trim(),
       summary: formState.summary.trim(),
       markdown_content: formState.markdown_content,
-      source_markdown_path: formState.source_markdown_path.trim(),
+      source_markdown_path: '',
       cover_path: formState.cover_path.trim(),
       category: formState.category,
       status: formState.status,
@@ -465,19 +445,15 @@ export function useAdminArticleEditorPanel(
       )
       return
     }
-    if (!payload.source_markdown_path.trim()) {
-      message.error('已匹配到本地图片，但缺少来源 Markdown 路径，请先补全后再上传')
-      return
-    }
     localImageSubmitting.value = true
     try {
       const result = await resolveAdminArticleLocalImages({
         markdown_content: payload.markdown_content,
-        source_markdown_path: payload.source_markdown_path,
+        source_markdown_path: '',
         mappings,
       })
       payload.markdown_content = result.markdown_content
-      payload.source_markdown_path = result.source_markdown_path || payload.source_markdown_path
+      payload.source_markdown_path = ''
       const unresolved = new Set<string>(result.unresolved_refs || [])
       if (unresolved.size > 0) {
         const sample = Array.from(unresolved).slice(0, 2).join('、')
@@ -562,7 +538,6 @@ export function useAdminArticleEditorPanel(
     selectedLocalFiles,
     localImageMatchResult,
     localImageMatchStats,
-    sourceMarkdownPathMissingForUpload,
     handleLocalFilesBeforeUpload,
     handleLocalDirectoryBeforeUpload,
     clearSelectedLocalFiles,

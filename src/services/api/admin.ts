@@ -83,10 +83,17 @@ export async function getAdminMediaTree(): Promise<AdminMediaDirectoryTreeResult
   return requestData<AdminMediaDirectoryTreeResult>(request.get('/admin/media/tree/'))
 }
 
-export async function uploadAdminMediaFile(payload: { path?: string; file: File }): Promise<{ name: string; url: string; path: string }> {
+export async function uploadAdminMediaFile(payload: {
+  path?: string
+  file: File
+  filename?: string
+  overwrite?: boolean
+}): Promise<{ name: string; url: string; path: string }> {
   const formData = new FormData()
   formData.append('file', payload.file, payload.file.name)
   formData.append('path', payload.path || '')
+  if (payload.filename) formData.append('filename', payload.filename)
+  if (payload.overwrite) formData.append('overwrite', '1')
   return requestData<{ name: string; url: string; path: string }>(
     request.post('/admin/media/upload/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

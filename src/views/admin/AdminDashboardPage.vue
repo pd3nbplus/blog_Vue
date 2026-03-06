@@ -124,7 +124,7 @@ onActivated(() => {
           <img src="/img/log.png" alt="log" />
           <p>查看日志</p>
         </a>
-        <a class="quick-card" href="#">
+        <a class="quick-card" href="#" @click.prevent="$router.push('/admin/personal_settings/')">
           <img src="/img/user.png" alt="user" />
           <p>用户管理</p>
         </a>
