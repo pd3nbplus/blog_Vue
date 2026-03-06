@@ -2,24 +2,24 @@
 
 博客前端工程（门户 + 后台管理），基于 `Vue 3 + TypeScript + Pinia + Vue Router + Ant Design Vue`。
 
-## 1. 项目定位
+![门户页面示意](image.png)
 
-- 门户能力：首页、文章列表、文章详情、分类、合集、搜索。
-- 后台能力：仪表盘、文章/分类/评论/合集、媒体库、日志、个人设置。
-- 工程目标：类型安全、模块化可扩展、可回归的构建与测试链路。
+![后台页面示意](image-1.png)
 
-## 2. 技术栈与版本
+## 1. 项目简介（面向使用者）
 
-- `vue@3.5.x`
-- `typescript@5.9.x`（`strict: true` + `noUncheckedIndexedAccess: true`）
-- `vite@7.x`
-- `vue-router@4.x`
-- `pinia@3.x`
-- `ant-design-vue@4.x`（`unplugin-vue-components` 自动按需注册）
-- 其他核心依赖：`axios`、`markdown-it`、`katex`、`dompurify`
-- 工程链路：`eslint + oxlint + prettier + vue-tsc + vitest + playwright`
+这是一个博客系统前端，包含两部分：
 
-## 3. 快速开始
+- 门户站点：浏览首页、文章列表、文章详情、分类与合集，支持搜索。
+- 后台管理：文章/分类/评论/合集管理，媒体库、日志、个人设置等能力。
+
+访问路径示例：
+
+- 门户首页：`/index/`
+- 后台首页：`/admin/dashboard/`
+- 后台登录：`/admin/login/`
+
+## 2. 快速开始（面向开发者）
 
 1. 安装依赖
 
@@ -41,7 +41,7 @@ npm run dev
 
 默认端口：`5174`
 
-## 4. 常用命令
+## 3. 常用命令
 
 ```bash
 npm run dev          # 本地开发
@@ -52,6 +52,17 @@ npm run build        # type-check + build
 npm run test:unit    # Vitest
 npm run test:e2e     # Playwright
 ```
+
+## 4. 技术栈与版本
+
+- `vue@3.5.x`
+- `typescript@5.9.x`（`strict: true` + `noUncheckedIndexedAccess: true`）
+- `vite@7.x`
+- `vue-router@4.x`
+- `pinia@3.x`
+- `ant-design-vue@4.x`（`unplugin-vue-components` 自动按需注册）
+- 其他核心依赖：`axios`、`markdown-it`、`katex`、`dompurify`
+- 工程链路：`eslint + oxlint + prettier + vue-tsc + vitest + playwright`
 
 ## 5. 目录与职责（可扩展基线）
 
@@ -98,20 +109,18 @@ src/
 - Ant Design Vue 按需加载（`vite.config.ts` + resolver）。
 - 构建前强制类型检查（`npm run build` -> `vue-tsc --build`）。
 - Vite 已启用 `cssCodeSplit` 与 `manualChunks` 分包策略。
-- ESLint 已启用：
-  - `@typescript-eslint/no-explicit-any`
-  - `@typescript-eslint/explicit-function-return-type`（含 `.vue`）
-  - `vue/require-explicit-emits`
+- ESLint 已启用 `@typescript-eslint/no-explicit-any`。
+- ESLint 已启用 `@typescript-eslint/explicit-function-return-type`（含 `.vue`）。
+- ESLint 已启用 `vue/require-explicit-emits`。
 
 部分对齐（仍需演进）：
 
 - 样式体系仍以 `styles/global.css` 为入口，尚未切换到 SCSS 体系。
-- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖）：
-  - `src/layouts/DefaultLayout.vue`
-  - `src/components/pages/home/HomePageContent.vue`
-  - `src/components/pages/article/ArticleListPageContent.vue`
-  - `src/components/pages/article/ArticleDetailPageContent.vue`
-  - `src/components/pages/collection/CollectionPageContent.vue`
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖），涉及：`src/layouts/DefaultLayout.vue`。
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖），涉及：`src/components/pages/home/HomePageContent.vue`。
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖），涉及：`src/components/pages/article/ArticleListPageContent.vue`。
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖），涉及：`src/components/pages/article/ArticleDetailPageContent.vue`。
+- 仍存在非 `scoped` 样式块（用于布局壳和内容渲染覆盖），涉及：`src/components/pages/collection/CollectionPageContent.vue`。
 
 建议的下一步对齐顺序：
 
@@ -134,6 +143,6 @@ npm run build-only
 ```
 
 5. PR 描述必须包含：
-- 影响范围（门户/后台、具体页面）
-- 接口与类型变更点
-- 回归点（登录态、路由守卫、主题切换、移动端样式）
+- 影响范围（门户/后台、具体页面）。
+- 接口与类型变更点。
+- 回归点（登录态、路由守卫、主题切换、移动端样式）。
