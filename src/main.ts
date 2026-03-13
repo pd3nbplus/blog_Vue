@@ -9,6 +9,9 @@ import './styles/global.css'
 
 initThemeFromStorage()
 initDynamicFavicon()
+if (typeof document !== 'undefined') {
+  document.title = 'PD的小站'
+}
 
 const app = createApp(App)
 
