@@ -41,6 +41,7 @@ export interface AdminArticleEditorPanelProps {
 }
 
 const CREATE_ARTICLE_DRAFT_STORAGE_KEY = 'blog_vue_admin_article_create_draft_v1'
+const CREATE_ARTICLE_DRAFT_CLEAR_ONCE_STORAGE_KEY = 'blog_vue_admin_article_create_draft_clear_once_v1'
 // Keep rich inferred return types for template consumers without duplicating a massive interface.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useAdminArticleEditorPanel(
@@ -499,8 +500,22 @@ export function useAdminArticleEditorPanel(
     },
   )
   onBeforeUnmount(() => {
+    const shouldSkipPersistOnUnmount =
+      !props.editing &&
+      typeof window !== 'undefined' &&
+      window.localStorage.getItem(CREATE_ARTICLE_DRAFT_CLEAR_ONCE_STORAGE_KEY) === '1'
+
+    if (shouldSkipPersistOnUnmount && typeof window !== 'undefined') {
+      window.localStorage.removeItem(CREATE_ARTICLE_DRAFT_CLEAR_ONCE_STORAGE_KEY)
+      window.localStorage.removeItem(CREATE_ARTICLE_DRAFT_STORAGE_KEY)
+    }
+
     if (draftPersistTimer) {
       clearDraftPersistTimer()
+      if (!shouldSkipPersistOnUnmount) {
+        persistCreateDraft()
+      }
+    } else if (!shouldSkipPersistOnUnmount) {
       persistCreateDraft()
     }
     resetAssetSelectionState()

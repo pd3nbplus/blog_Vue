@@ -28,6 +28,7 @@ const ORDERING_FIELDS: AdminArticleOrderingField[] = ['updated_at', 'created_at'
 const DEFAULT_ORDERING_FIELD: AdminArticleOrderingField = 'published_at'
 const DEFAULT_ORDERING_DIRECTION: AdminArticleOrderingDirection = 'desc'
 const CREATE_ARTICLE_DRAFT_STORAGE_KEY = 'blog_vue_admin_article_create_draft_v1'
+const CREATE_ARTICLE_DRAFT_CLEAR_ONCE_STORAGE_KEY = 'blog_vue_admin_article_create_draft_clear_once_v1'
 type AntSortOrder = 'ascend' | 'descend' | null
 
 // Keep inferred return object types for downstream usage without duplicating a large interface.
@@ -280,6 +281,7 @@ export function useAdminArticleManager() {
         await adminArticleStore.createArticle(payload)
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem(CREATE_ARTICLE_DRAFT_STORAGE_KEY)
+          window.localStorage.setItem(CREATE_ARTICLE_DRAFT_CLEAR_ONCE_STORAGE_KEY, '1')
         }
         feedback.success('文章创建成功')
       }
