@@ -1,4 +1,4 @@
-import request, { requestData } from '@/services/http'
+import request, { requestData, UPLOAD_TIMEOUT_MS } from '@/services/http'
 import type { PaginatedData } from '@/types/api'
 import type { CategoryItem } from '@/types/article'
 import type {
@@ -9,6 +9,7 @@ import type {
   AdminMediaListResult,
 } from '@/types/admin'
 import type { UserProfile } from '@/types/user'
+import { convertImageFileToWebp, toWebpFileName } from '@/utils/imageUpload'
 
 export async function getAdminCategoryTree(): Promise<CategoryItem[]> {
   return requestData<CategoryItem[]>(request.get('/admin/categories/tree/'))
@@ -20,10 +21,13 @@ export async function createAdminCategory(payload: AdminCategoryPayload & { icon
   if (typeof payload.order === 'number') formData.append('order', String(payload.order))
   if (payload.parent !== undefined && payload.parent !== null) formData.append('parent', String(payload.parent))
   if (payload.slug) formData.append('slug', payload.slug)
-  if (payload.iconFile) formData.append('icon_file', payload.iconFile, payload.iconFile.name)
+  if (payload.iconFile) {
+    const iconFile = await convertImageFileToWebp(payload.iconFile)
+    formData.append('icon_file', iconFile, iconFile.name)
+  }
   return requestData<CategoryItem>(
     request.post('/admin/categories/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }
@@ -37,10 +41,13 @@ export async function updateAdminCategory(
   if (payload.order !== undefined) formData.append('order', String(payload.order))
   if (payload.parent !== undefined && payload.parent !== null) formData.append('parent', String(payload.parent))
   if (payload.slug !== undefined) formData.append('slug', payload.slug)
-  if (payload.iconFile) formData.append('icon_file', payload.iconFile, payload.iconFile.name)
+  if (payload.iconFile) {
+    const iconFile = await convertImageFileToWebp(payload.iconFile)
+    formData.append('icon_file', iconFile, iconFile.name)
+  }
   return requestData<CategoryItem>(
     request.patch(`/admin/categories/${id}/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }
@@ -89,14 +96,16 @@ export async function uploadAdminMediaFile(payload: {
   filename?: string
   overwrite?: boolean
 }): Promise<{ name: string; url: string; path: string }> {
+  const uploadFile = await convertImageFileToWebp(payload.file)
+  const isConverted = uploadFile !== payload.file
   const formData = new FormData()
-  formData.append('file', payload.file, payload.file.name)
+  formData.append('file', uploadFile, uploadFile.name)
   formData.append('path', payload.path || '')
-  if (payload.filename) formData.append('filename', payload.filename)
+  if (payload.filename) formData.append('filename', isConverted ? toWebpFileName(payload.filename) : payload.filename)
   if (payload.overwrite) formData.append('overwrite', '1')
   return requestData<{ name: string; url: string; path: string }>(
     request.post('/admin/media/upload/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }

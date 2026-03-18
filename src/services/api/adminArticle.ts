@@ -1,7 +1,8 @@
-import request, { requestData } from '@/services/http'
+import request, { requestData, UPLOAD_TIMEOUT_MS } from '@/services/http'
 import type { PaginatedData } from '@/types/api'
 import type { AdminDashboardSummary } from '@/types/admin'
 import type { AdminArticlePayload, ArticleDetail, ArticleItem, ArticleStatus } from '@/types/article'
+import { convertImageFileToWebp } from '@/utils/imageUpload'
 
 export type AdminArticleOrderingField = 'updated_at' | 'created_at' | 'published_at' | 'view_count' | 'title' | 'status'
 export type AdminArticleOrderingDirection = 'asc' | 'desc'
@@ -62,7 +63,14 @@ export async function resolveAdminArticleLocalImages(payload: ResolveLocalImages
   formData.append('markdown_content', payload.markdown_content)
   formData.append('source_markdown_path', payload.source_markdown_path)
 
-  const serializedMappings = payload.mappings.map((mapping, index) => {
+  const resolvedMappings = await Promise.all(
+    payload.mappings.map(async (mapping) => ({
+      ref: mapping.ref,
+      file: await convertImageFileToWebp(mapping.file),
+    })),
+  )
+
+  const serializedMappings = resolvedMappings.map((mapping, index) => {
     const fileField = `file_${index}`
     formData.append(fileField, mapping.file, mapping.file.name)
     return {
@@ -74,9 +82,7 @@ export async function resolveAdminArticleLocalImages(payload: ResolveLocalImages
 
   return requestData<ResolveLocalImagesResponse>(
     request.post('/admin/articles/resolve-local-images/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }
@@ -92,9 +98,7 @@ export async function uploadAdminArticleMarkdown(payload: {
   if (payload.category !== undefined && payload.category !== null) formData.append('category', String(payload.category))
   return requestData<{ markdown_content: string; source_markdown_path: string; saved_to: string }>(
     request.post('/admin/articles/upload-markdown/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }
@@ -104,15 +108,14 @@ export async function uploadAdminArticleCover(payload: {
   title: string
   category?: number | null
 }): Promise<{ cover_path: string; saved_to: string }> {
+  const coverFile = await convertImageFileToWebp(payload.file)
   const formData = new FormData()
-  formData.append('cover_file', payload.file, payload.file.name)
+  formData.append('cover_file', coverFile, coverFile.name)
   formData.append('title', payload.title)
   if (payload.category !== undefined && payload.category !== null) formData.append('category', String(payload.category))
   return requestData<{ cover_path: string; saved_to: string }>(
     request.post('/admin/articles/upload-cover/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      timeout: UPLOAD_TIMEOUT_MS,
     }),
   )
 }
