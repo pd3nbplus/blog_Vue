@@ -8,8 +8,10 @@ import type { ApiResponse } from '@/types/api'
 
 const http = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 50000,
 })
+
+export const UPLOAD_TIMEOUT_MS = 0
 
 interface ApiErrorLike {
   message?: string
