@@ -1,8 +1,10 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
 
+import { useTheme } from '@/composables/useTheme'
 import { BACKEND_ORIGIN } from '@/utils/assets'
 import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
 import { renderMarkdownContent } from '@/utils/markdown'
+import { renderMermaidDiagrams } from '@/utils/mermaid'
 
 type RenderMathFn = (
   element: HTMLElement,
@@ -12,6 +14,7 @@ type RenderMathFn = (
     strict?: 'ignore' | 'warn' | 'error'
     errorColor?: string
     trust?: boolean
+    ignoredClasses?: string[]
   },
 ) => void
 
@@ -30,6 +33,7 @@ export interface MarkdownTextareaRefInstance {
 // Keep inferred return object types for composable consumers without duplicate type declarations.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
+  const { currentTheme } = useTheme()
   const loadedScripts = new Set<string>()
   let editorTextareaEl: HTMLTextAreaElement | null = null
   let scrollingSyncLocked = false
@@ -105,6 +109,8 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
       p.innerHTML = p.innerHTML.replace(/\\\s*\n/g, '\\\\')
     })
 
+    await renderMermaidDiagrams(container)
+
     try {
       win.renderMathInElement?.(container, {
         delimiters: [
@@ -116,6 +122,7 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
         throwOnError: false,
         strict: 'ignore',
         errorColor: '#cc0000',
+        ignoredClasses: ['mermaid'],
       })
     } catch {
       // Keep preview usable even if a malformed formula appears in markdown.
@@ -202,6 +209,10 @@ export function useAdminArticlePreview(options: UseAdminArticlePreviewOptions) {
     },
     { immediate: true },
   )
+
+  watch(currentTheme, () => {
+    void nextTick().then(() => enhancePreviewContent())
+  })
 
   onMounted(async () => {
     await nextTick()

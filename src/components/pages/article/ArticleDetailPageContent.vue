@@ -2,10 +2,12 @@
 import { computed, nextTick, ref, watch } from 'vue'
 
 import { useArticleDetailPage } from '@/composables/pages/useArticleDetailPage'
+import { useTheme } from '@/composables/useTheme'
 import { BACKEND_ORIGIN, normalizeRelativePath } from '@/utils/assets'
 import { getArticleStatusLabel } from '@/utils/articleStatus'
 import { buildImageProxyUrl, isCsdnImageHost, isRemoteHttpImage } from '@/utils/image'
 import { renderMarkdownContent } from '@/utils/markdown'
+import { renderMermaidDiagrams } from '@/utils/mermaid'
 
 type RenderMathFn = (
   element: HTMLElement,
@@ -15,10 +17,12 @@ type RenderMathFn = (
     strict?: 'ignore' | 'warn' | 'error'
     errorColor?: string
     trust?: boolean
+    ignoredClasses?: string[]
   },
 ) => void
 
 const { detail, loading } = useArticleDetailPage()
+const { currentTheme } = useTheme()
 const loadedScripts = new Set<string>()
 const renderedHtml = ref('')
 const tocHtml = ref('')
@@ -212,6 +216,8 @@ async function enhanceArticleContent(): Promise<void> {
     p.innerHTML = p.innerHTML.replace(/\\\s*\n/g, '\\\\')
   })
 
+  await renderMermaidDiagrams(markdownContainer)
+
   try {
     win.renderMathInElement?.(markdownContainer, {
       delimiters: [
@@ -223,6 +229,7 @@ async function enhanceArticleContent(): Promise<void> {
       throwOnError: false,
       strict: 'ignore',
       errorColor: '#cc0000',
+      ignoredClasses: ['mermaid'],
     })
   } catch {
     // Keep article readable even if a malformed formula appears.
@@ -247,6 +254,10 @@ watch(
   },
   { immediate: true },
 )
+
+watch(currentTheme, () => {
+  void nextTick().then(() => enhanceArticleContent())
+})
 </script>
 
 <template>

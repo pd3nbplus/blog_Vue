@@ -69,4 +69,12 @@ $$`
     expect(result.html).toContain('$x_{t1}$')
     expect(result.html).toContain('$\\hat{\\beta_1}$')
   })
+
+  it('should render mermaid fenced block as mermaid container', () => {
+    const content = '```mermaid\ngraph TD;\nA-->B;\n```'
+    const result = renderMarkdownContent(content)
+    expect(result.html).toContain('<div class="mermaid">')
+    expect(result.html).toContain('graph TD;')
+    expect(result.html).not.toContain('<pre><code')
+  })
 })

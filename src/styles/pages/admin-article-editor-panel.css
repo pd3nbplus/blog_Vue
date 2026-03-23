@@ -122,6 +122,22 @@
   height: auto;
 }
 
+.preview-markdown :deep(.mermaid) {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px;
+}
+
+.preview-markdown :deep(.mermaid svg) {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
 .local-image-tip {
   margin-top: 8px;
   color: var(--btn-warning);

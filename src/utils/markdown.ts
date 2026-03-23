@@ -20,6 +20,28 @@ const md = new MarkdownIt({
   breaks: true,
 })
 
+const defaultFenceRenderer = md.renderer.rules.fence
+
+md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]
+  if (!token) {
+    if (defaultFenceRenderer) {
+      return defaultFenceRenderer(tokens, idx, options, env, self)
+    }
+    return ''
+  }
+  const language = (token.info || '').trim().split(/\s+/, 1)[0]?.toLowerCase()
+
+  if (language === 'mermaid') {
+    return `<div class="mermaid">${escapeHtml(token.content || '')}</div>\n`
+  }
+
+  if (defaultFenceRenderer) {
+    return defaultFenceRenderer(tokens, idx, options, env, self)
+  }
+  return self.renderToken(tokens, idx, options)
+}
+
 md.use(markdownItAnchor, {
   permalink: false,
   slugify: (title: string) =>

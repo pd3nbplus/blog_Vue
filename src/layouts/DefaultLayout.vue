@@ -114,7 +114,7 @@ onMounted(() => {
     </div>
 
     <div class="footer">
-      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">辽ICP备2022003164号-1</a>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">粤ICP备2026024505号-1</a>
       &nbsp; &copy; 2024 pdnbplus. All rights reserved.
     </div>
   </div>

@@ -294,6 +294,22 @@
     line-height: normal;
 }
 
+.article-markdown.markdown-body .mermaid {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    padding: 10px;
+}
+
+.article-markdown.markdown-body .mermaid svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
 .article-markdown.markdown-body pre code.hljs .hljs-comment,
 .article-markdown.markdown-body pre code.hljs .hljs-quote {
     color: var(--hljs-comment);
