@@ -254,3 +254,66 @@ npm run build-only
 - 影响范围（门户/后台、具体页面）。
 - 接口与类型变更点。
 - 回归点（登录态、路由守卫、主题切换、移动端样式）。
+
+## 9. 🚢 线上发布（dist.zip 原子发布）
+
+为避免“更新到一半页面打不开/资源 404”，线上请统一使用 **dist.zip + 服务器发布脚本**。
+
+### 9.1 服务器发布脚本
+
+脚本路径（已部署在服务器）：
+
+```bash
+/root/project/scripts/deploy_frontend_distzip.sh
+```
+
+功能：
+
+- 解压并校验 `index.html` 与入口 `index-*.js` 是否匹配
+- 先备份当前 `dist` 到 `dist.bak.<timestamp>`
+- 使用 `rsync --delete` 全量同步（清理旧 hash 文件）
+- 自动重启 `blog_frontend`
+- 自动健康检查（失败自动回滚）
+
+### 9.2 标准发布步骤（推荐）
+
+1. 本地构建并打包
+
+```bash
+npm ci
+npm run build:server
+cd dist
+zip -r ../dist.zip . -x "*.DS_Store" -x "*/.DS_Store"
+cd ..
+```
+
+2. 上传 `dist.zip` 到服务器固定位置
+
+```bash
+scp dist.zip root@47.107.147.48:/root/project/blog_vue/dist.zip
+```
+
+3. 在服务器执行原子发布
+
+```bash
+ssh root@47.107.147.48 "bash /root/project/scripts/deploy_frontend_distzip.sh /root/project/blog_vue/dist.zip pdnbplus.online"
+```
+
+### 9.3 快速回滚
+
+若发布后异常，可回滚最近备份目录：
+
+```bash
+ssh root@47.107.147.48 '
+set -e
+LATEST_BAK=$(ls -dt /root/project/blog_vue/dist.bak.* | head -n 1)
+rsync -a --delete "${LATEST_BAK}/" /root/project/blog_vue/dist/
+docker restart blog_frontend
+'
+```
+
+### 9.4 注意事项
+
+- 不要手工 `cp` 零散文件到线上 `dist`，容易出现“新旧资源混合”。
+- 不要在线上机器直接跑重型构建（`npm run build`），内存不足会导致 SSH 中断。
+- 若 zip 中包含 `Zone.Identifier`（Windows 附带信息）可忽略，发布脚本已兼容。
