@@ -1,16 +1,15 @@
 .article-shell {
     --left-rail-width: clamp(15rem, 18vw, 20rem);
-    --right-rail-width: 32vmin;
+    --right-rail-width: clamp(14rem, 20vw, 20rem);
     --rail-gap: clamp(0.7rem, 1.2vw, 1.2rem);
-    --page-gutter: clamp(3.5rem, 10vw, 12rem);
     width: 100%;
-    margin: 0;
-    padding: 1rem 0 2rem;
+    margin: 0 auto;
+    padding: 1rem clamp(0.75rem, 3vw, 2rem) 2rem;
 }
 
 .article-main {
-    margin-left: calc(var(--left-rail-width) + var(--rail-gap) + var(--page-gutter));
-    margin-right: calc(var(--right-rail-width) + var(--rail-gap) + var(--page-gutter));
+    width: min(1000px, 100%);
+    margin: 0 auto;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--surface);
@@ -72,7 +71,7 @@
 
 .meta-fixed {
     position: fixed;
-    left: var(--page-gutter);
+    left: clamp(0.75rem, 4vw, 2.5rem);
     top: 88px;
     width: var(--left-rail-width);
     max-height: calc(100vh - 108px);
@@ -110,7 +109,7 @@
 
 .toc-container {
     position: fixed;
-    right: var(--page-gutter);
+    right: clamp(0.75rem, 4vw, 2.5rem);
     top: 88px;
     width: var(--right-rail-width);
     max-height: calc(100vh - 108px);
@@ -368,28 +367,22 @@
     }
 }
 
-@media (max-width: 1200px) {
-    .article-main {
-        margin-left: calc(var(--left-rail-width) + var(--page-gutter));
-        margin-right: var(--page-gutter);
-    }
-
+@media (max-width: 1400px) {
     .toc-container {
         display: none;
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
     .meta-fixed {
-        position: static;
-        width: auto;
-        max-height: none;
-        margin: 0 0.75rem 0.75rem;
+        display: none;
     }
+}
 
+@media (max-width: 900px) {
     .article-main {
-        margin-left: 0.75rem;
-        margin-right: 0.75rem;
+        margin-left: 0;
+        margin-right: 0;
     }
 
     .article-title-vertical {

@@ -26,6 +26,31 @@
     backdrop-filter: blur(8px);
 }
 
+.navbar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 6px 0 0 0.75rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+.navbar-toggle-bar {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 999px;
+    margin: 2px 0;
+}
+
 .navbar-content {
     width: min(100%, 96rem);
     padding: 0 1rem;
@@ -154,6 +179,18 @@
 }
 
 @media screen and (max-width: 768px) {
+    .navbar-compact .navbar-toggle {
+        display: inline-flex;
+    }
+
+    .navbar-compact .navbar-content {
+        display: none;
+    }
+
+    .navbar-compact.navbar-open .navbar-content {
+        display: grid;
+    }
+
     .navbar-content {
         display: grid;
         grid-template-columns: 1fr;
@@ -187,6 +224,14 @@
     }
 
     .content {
+        margin-top: calc(var(--legacy-nav-height) + 86px);
+    }
+
+    .navbar-compact + .content {
+        margin-top: var(--legacy-nav-height);
+    }
+
+    .navbar-compact.navbar-open + .content {
         margin-top: calc(var(--legacy-nav-height) + 86px);
     }
 }

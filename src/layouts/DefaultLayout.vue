@@ -33,6 +33,8 @@ const featuredCollectionNavTarget = computed(() => {
 })
 
 const searchText = ref('')
+const isNavOpen = ref(false)
+const isArticleDetail = computed(() => route.name === 'article-detail')
 
 function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined): string {
   return typeof value === 'string' ? value : ''
@@ -69,6 +71,17 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => route.fullPath,
+  () => {
+    isNavOpen.value = false
+  },
+)
+
+function toggleNav(): void {
+  isNavOpen.value = !isNavOpen.value
+}
+
 if (!articleStore.categories.length) {
   void articleStore.fetchCategories().catch(() => {})
 }
@@ -80,7 +93,19 @@ onMounted(() => {
 
 <template>
   <div class="legacy-page">
-    <div class="navbar">
+    <div class="navbar" :class="{ 'navbar-compact': isArticleDetail, 'navbar-open': isNavOpen }">
+      <button
+        v-if="isArticleDetail"
+        class="navbar-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        :aria-expanded="isNavOpen"
+        @click="toggleNav"
+      >
+        <span class="navbar-toggle-bar" />
+        <span class="navbar-toggle-bar" />
+        <span class="navbar-toggle-bar" />
+      </button>
       <div class="navbar-content">
         <div class="navbar-links">
           <router-link :to="{ name: 'home' }">主页</router-link>
